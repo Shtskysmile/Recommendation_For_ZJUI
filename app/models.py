@@ -12,6 +12,8 @@ def utc_now_iso() -> str:
 class GenerationRequest(BaseModel):
     task_name: str
     capability_description: str
+    task_type: str | None = None
+    dataset_name: str | None = None
     top_k: int = Field(default=10, ge=1, le=50)
     constraints: list[str] = Field(default_factory=list)
     candidate_count: int = Field(default=2, ge=1, le=4)
@@ -29,6 +31,7 @@ class CapabilitySpec(BaseModel):
     task_name: str
     objective: str
     task_type: str
+    dataset_name: str
     top_k: int
     constraints: list[str] = Field(default_factory=list)
     success_metrics: list[str] = Field(default_factory=list)
@@ -72,6 +75,10 @@ class ValidationMetrics(BaseModel):
     recall_at_k: float = 0.0
     ndcg_at_k: float = 0.0
     coverage: float = 0.0
+    accuracy: float = 0.0
+    precision: float = 0.0
+    recall: float = 0.0
+    f1: float = 0.0
     average_latency_ms: float = 0.0
     peak_allocated_kb: float = 0.0
 
@@ -79,10 +86,12 @@ class ValidationMetrics(BaseModel):
 class ValidationReport(BaseModel):
     candidate_id: str
     algorithm_key: str
+    profile_name: str = ""
     success: bool
     interface_ok: bool
     stability_ok: bool
     code_path: str
+    execution_mode: str = "in_process"
     score: float
     metrics: ValidationMetrics
     errors: list[str] = Field(default_factory=list)

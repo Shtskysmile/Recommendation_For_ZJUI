@@ -1,0 +1,11 @@
+{
+  "key": "itemcf",
+  "display_name": "Item-Based Collaborative Filtering",
+  "summary": "Score candidate items by similarity to each user's interacted items.",
+  "rationale": "Better aligned with Top-K recommendation quality metrics such as Recall@K and NDCG@K.",
+  "family": "collaborative_filtering",
+  "strengths": ["recall", "ndcg", "implicit_feedback", "ranking"],
+  "search_hints": ["recall", "ndcg", "implicit feedback", "ranking", "top-k"],
+  "task_types": ["top_k_recommendation"],
+  "renderer_path": "app.template_library:render_itemcf_template"
+}

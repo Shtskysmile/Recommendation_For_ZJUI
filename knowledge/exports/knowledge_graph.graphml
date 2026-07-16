@@ -1,12 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
-  <key id="d10" for="edge" attr.name="score" attr.type="string" />
-  <key id="d9" for="edge" attr.name="success" attr.type="string" />
-  <key id="d8" for="edge" attr.name="type" attr.type="string" />
-  <key id="d7" for="node" attr.name="reports" attr.type="string" />
-  <key id="d6" for="node" attr.name="capability_version" attr.type="string" />
-  <key id="d5" for="node" attr.name="task_name" attr.type="string" />
-  <key id="d4" for="node" attr.name="best_candidate_id" attr.type="string" />
+  <key id="d4" for="edge" attr.name="type" attr.type="string" />
   <key id="d3" for="node" attr.name="keywords" attr.type="string" />
   <key id="d2" for="node" attr.name="description" attr.type="string" />
   <key id="d1" for="node" attr.name="name" attr.type="string" />
@@ -18,10 +12,22 @@
       <data key="d2">Replicate a Top-K recommendation workflow for implicit-feedback movie ranking tasks.</data>
       <data key="d3">["recommendation", "top-k", "ranking", "implicit", "feedback", "recall", "ndcg", "coverage", "movielens"]</data>
     </node>
+    <node id="capability::tabular_classification">
+      <data key="d0">Capability</data>
+      <data key="d1">Tabular Classification Replication</data>
+      <data key="d2">Replicate a tabular classification workflow for customer churn and similar binary prediction tasks.</data>
+      <data key="d3">["classification", "churn", "tabular", "binary", "prediction", "accuracy", "precision", "recall", "f1"]</data>
+    </node>
     <node id="task::movie_homepage">
       <data key="d0">TaskType</data>
       <data key="d1">Movie Homepage Recommendation</data>
       <data key="d2">Homepage or browse-page recommendation for movie platforms.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="task::customer_churn">
+      <data key="d0">TaskType</data>
+      <data key="d1">Customer Churn Prediction</data>
+      <data key="d2">Binary classification for customer churn risk in subscription businesses.</data>
       <data key="d3">[]</data>
     </node>
     <node id="algorithm::popularity">
@@ -42,6 +48,18 @@
       <data key="d2">Recommend unseen items by matching user interaction genres with candidate item genres.</data>
       <data key="d3">["content", "based", "genre", "explainable", "cold", "start", "local", "cpu", "top-k"]</data>
     </node>
+    <node id="algorithm::majority_class">
+      <data key="d0">Algorithm</data>
+      <data key="d1">Majority Classifier</data>
+      <data key="d2">Baseline classifier that predicts the majority label from the training split.</data>
+      <data key="d3">["baseline", "classification", "tabular", "churn", "majority", "local", "cpu"]</data>
+    </node>
+    <node id="algorithm::risk_score">
+      <data key="d0">Algorithm</data>
+      <data key="d1">Risk Score Classifier</data>
+      <data key="d2">Weighted feature score classifier for churn-style binary prediction.</data>
+      <data key="d3">["classification", "churn", "scorecard", "tabular", "explainable", "f1", "accuracy", "local", "cpu"]</data>
+    </node>
     <node id="metric::recall_at_k">
       <data key="d0">Metric</data>
       <data key="d1">Recall@K</data>
@@ -60,6 +78,30 @@
       <data key="d2">Unique recommended items divided by unique catalog items.</data>
       <data key="d3">[]</data>
     </node>
+    <node id="metric::accuracy">
+      <data key="d0">Metric</data>
+      <data key="d1">Accuracy</data>
+      <data key="d2">Overall fraction of correctly predicted labels.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="metric::precision">
+      <data key="d0">Metric</data>
+      <data key="d1">Precision</data>
+      <data key="d2">Fraction of predicted positives that are true positives.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="metric::recall">
+      <data key="d0">Metric</data>
+      <data key="d1">Recall</data>
+      <data key="d2">Fraction of true positives that are correctly predicted.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="metric::f1">
+      <data key="d0">Metric</data>
+      <data key="d1">F1 Score</data>
+      <data key="d2">Harmonic mean of precision and recall.</data>
+      <data key="d3">[]</data>
+    </node>
     <node id="constraint::implicit_feedback">
       <data key="d0">Constraint</data>
       <data key="d1">Implicit Feedback Only</data>
@@ -70,6 +112,12 @@
       <data key="d0">Constraint</data>
       <data key="d1">Local CPU Execution</data>
       <data key="d2">Algorithm must run on local CPU without external services.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="constraint::tabular_features">
+      <data key="d0">Constraint</data>
+      <data key="d1">Structured Tabular Features</data>
+      <data key="d2">Inputs are structured tabular features with a binary target.</data>
       <data key="d3">[]</data>
     </node>
     <node id="template::popularity_py">
@@ -90,6 +138,18 @@
       <data key="d2">Template for the genre affinity recommender.</data>
       <data key="d3">[]</data>
     </node>
+    <node id="template::majority_class_py">
+      <data key="d0">CodeTemplate</data>
+      <data key="d1">Majority Class Python Template</data>
+      <data key="d2">Template for the majority-label churn baseline.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="template::risk_score_py">
+      <data key="d0">CodeTemplate</data>
+      <data key="d1">Risk Score Python Template</data>
+      <data key="d2">Template for the weighted churn risk classifier.</data>
+      <data key="d3">[]</data>
+    </node>
     <node id="failure::seen_items">
       <data key="d0">FailurePattern</data>
       <data key="d1">Seen Item Leakage</data>
@@ -108,86 +168,122 @@
       <data key="d2">Generated candidate imports or executes unsafe modules or functions.</data>
       <data key="d3">[]</data>
     </node>
-    <node id="validation::sample-topk-movielens">
-      <data key="d0">ValidationResult</data>
-      <data key="d1">Validation sample-topk-movielens</data>
-      <data key="d2">Best candidate: itemcf-1</data>
-      <data key="d4">itemcf-1</data>
-      <data key="d5">movie_homepage</data>
-      <data key="d6">87dbc0ec</data>
-      <data key="d7">[{"candidate_id": "itemcf-1", "algorithm_key": "itemcf", "success": true, "score": 1.0, "metrics": {"recall_at_k": 1.0, "ndcg_at_k": 1.0, "coverage": 1.0, "average_latency_ms": 0.009444, "peak_allocated_kb": 1.703125}}, {"candidate_id": "popularity-2", "algorithm_key": "popularity", "success": true, "score": 0.301667, "metrics": {"recall_at_k": 0.333333, "ndcg_at_k": 0.166667, "coverage": 0.6, "average_latency_ms": 0.001788, "peak_allocated_kb": 1.617188}}, {"candidate_id": "genre_affinity-3", "algorithm_key": "genre_affinity", "success": true, "score": 0.985417, "metrics": {"recall_at_k": 1.0, "ndcg_at_k": 0.958333, "coverage": 1.0, "average_latency_ms": 0.019257, "peak_allocated_kb": 1.820312}}]</data>
+    <node id="failure::prediction_length">
+      <data key="d0">FailurePattern</data>
+      <data key="d1">Prediction Length Mismatch</data>
+      <data key="d2">The number of predicted labels does not match the evaluation set size.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="failure::label_cast">
+      <data key="d0">FailurePattern</data>
+      <data key="d1">Non-Numeric Label Output</data>
+      <data key="d2">Predicted labels are not compatible with integer binary targets.</data>
+      <data key="d3">[]</data>
     </node>
     <edge source="capability::topk_recommendation" target="task::movie_homepage">
-      <data key="d8">supports</data>
+      <data key="d4">supports</data>
     </edge>
     <edge source="capability::topk_recommendation" target="algorithm::popularity">
-      <data key="d8">uses</data>
+      <data key="d4">uses</data>
     </edge>
     <edge source="capability::topk_recommendation" target="algorithm::itemcf">
-      <data key="d8">uses</data>
+      <data key="d4">uses</data>
     </edge>
     <edge source="capability::topk_recommendation" target="algorithm::genre_affinity">
-      <data key="d8">uses</data>
+      <data key="d4">uses</data>
+    </edge>
+    <edge source="capability::tabular_classification" target="task::customer_churn">
+      <data key="d4">supports</data>
+    </edge>
+    <edge source="capability::tabular_classification" target="algorithm::majority_class">
+      <data key="d4">uses</data>
+    </edge>
+    <edge source="capability::tabular_classification" target="algorithm::risk_score">
+      <data key="d4">uses</data>
     </edge>
     <edge source="algorithm::popularity" target="metric::coverage">
-      <data key="d8">evaluated_by</data>
+      <data key="d4">evaluated_by</data>
     </edge>
     <edge source="algorithm::popularity" target="constraint::local_cpu">
-      <data key="d8">fits</data>
+      <data key="d4">fits</data>
     </edge>
     <edge source="algorithm::popularity" target="template::popularity_py">
-      <data key="d8">implemented_by</data>
+      <data key="d4">implemented_by</data>
     </edge>
     <edge source="algorithm::itemcf" target="metric::recall_at_k">
-      <data key="d8">evaluated_by</data>
+      <data key="d4">evaluated_by</data>
     </edge>
     <edge source="algorithm::itemcf" target="metric::ndcg_at_k">
-      <data key="d8">evaluated_by</data>
+      <data key="d4">evaluated_by</data>
     </edge>
     <edge source="algorithm::itemcf" target="constraint::implicit_feedback">
-      <data key="d8">fits</data>
+      <data key="d4">fits</data>
     </edge>
     <edge source="algorithm::itemcf" target="template::itemcf_py">
-      <data key="d8">implemented_by</data>
+      <data key="d4">implemented_by</data>
     </edge>
     <edge source="algorithm::genre_affinity" target="metric::coverage">
-      <data key="d8">evaluated_by</data>
+      <data key="d4">evaluated_by</data>
     </edge>
     <edge source="algorithm::genre_affinity" target="constraint::local_cpu">
-      <data key="d8">fits</data>
+      <data key="d4">fits</data>
     </edge>
     <edge source="algorithm::genre_affinity" target="template::genre_affinity_py">
-      <data key="d8">implemented_by</data>
+      <data key="d4">implemented_by</data>
+    </edge>
+    <edge source="algorithm::majority_class" target="metric::accuracy">
+      <data key="d4">evaluated_by</data>
+    </edge>
+    <edge source="algorithm::majority_class" target="metric::f1">
+      <data key="d4">evaluated_by</data>
+    </edge>
+    <edge source="algorithm::majority_class" target="constraint::tabular_features">
+      <data key="d4">fits</data>
+    </edge>
+    <edge source="algorithm::majority_class" target="constraint::local_cpu">
+      <data key="d4">fits</data>
+    </edge>
+    <edge source="algorithm::majority_class" target="template::majority_class_py">
+      <data key="d4">implemented_by</data>
+    </edge>
+    <edge source="algorithm::risk_score" target="metric::accuracy">
+      <data key="d4">evaluated_by</data>
+    </edge>
+    <edge source="algorithm::risk_score" target="metric::precision">
+      <data key="d4">evaluated_by</data>
+    </edge>
+    <edge source="algorithm::risk_score" target="metric::recall">
+      <data key="d4">evaluated_by</data>
+    </edge>
+    <edge source="algorithm::risk_score" target="metric::f1">
+      <data key="d4">evaluated_by</data>
+    </edge>
+    <edge source="algorithm::risk_score" target="constraint::tabular_features">
+      <data key="d4">fits</data>
+    </edge>
+    <edge source="algorithm::risk_score" target="constraint::local_cpu">
+      <data key="d4">fits</data>
+    </edge>
+    <edge source="algorithm::risk_score" target="template::risk_score_py">
+      <data key="d4">implemented_by</data>
     </edge>
     <edge source="failure::seen_items" target="algorithm::popularity">
-      <data key="d8">suggests_fix</data>
+      <data key="d4">suggests_fix</data>
     </edge>
     <edge source="failure::seen_items" target="algorithm::genre_affinity">
-      <data key="d8">suggests_fix</data>
+      <data key="d4">suggests_fix</data>
     </edge>
     <edge source="failure::empty_list" target="algorithm::itemcf">
-      <data key="d8">suggests_fix</data>
+      <data key="d4">suggests_fix</data>
     </edge>
     <edge source="failure::unsafe_code" target="template::itemcf_py">
-      <data key="d8">suggests_fix</data>
+      <data key="d4">suggests_fix</data>
     </edge>
-    <edge source="validation::sample-topk-movielens" target="capability::topk_recommendation">
-      <data key="d8">verifies</data>
+    <edge source="failure::prediction_length" target="algorithm::majority_class">
+      <data key="d4">suggests_fix</data>
     </edge>
-    <edge source="validation::sample-topk-movielens" target="algorithm::itemcf">
-      <data key="d8">evaluated</data>
-      <data key="d9">True</data>
-      <data key="d10">1.0</data>
-    </edge>
-    <edge source="validation::sample-topk-movielens" target="algorithm::popularity">
-      <data key="d8">evaluated</data>
-      <data key="d9">True</data>
-      <data key="d10">0.301667</data>
-    </edge>
-    <edge source="validation::sample-topk-movielens" target="algorithm::genre_affinity">
-      <data key="d8">evaluated</data>
-      <data key="d9">True</data>
-      <data key="d10">0.985417</data>
+    <edge source="failure::label_cast" target="algorithm::risk_score">
+      <data key="d4">suggests_fix</data>
     </edge>
   </graph>
 </graphml>

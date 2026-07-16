@@ -1,0 +1,11 @@
+{
+  "key": "genre_affinity",
+  "display_name": "Genre Affinity Recommender",
+  "summary": "Estimate user preference from interaction genres and rank unseen items by genre affinity.",
+  "rationale": "Adds a content-oriented candidate that is easy to explain and transfers better to sparse histories.",
+  "family": "content_based",
+  "strengths": ["explainability", "content", "local_cpu", "cold_start"],
+  "search_hints": ["content", "genre", "explain", "cold start", "sparse"],
+  "task_types": ["top_k_recommendation"],
+  "renderer_path": "app.template_library:render_genre_affinity_template"
+}

@@ -4,7 +4,6 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from app.codegen import CandidateGenerator
-from app.data import MovieLensDatasetLoader
 from app.gitops import GitRepositoryManager
 from app.knowledge import KnowledgeGraphStore
 from app.llm import LLMProvider, create_provider
@@ -18,8 +17,9 @@ from app.models import (
     ValidationSummary,
     utc_now_iso,
 )
-from app.reporting import ReportWriter
+from app.plugin_loader import PluginLoader
 from app.repair import RepairAgent
+from app.reporting import ReportWriter
 from app.search import BeamSearchPlanner
 from app.settings import AppSettings
 from app.validation import CandidateValidator
@@ -29,7 +29,6 @@ class CapabilityFactoryService:
     def __init__(
         self,
         settings: AppSettings,
-        dataset_loader: MovieLensDatasetLoader,
         knowledge_store: KnowledgeGraphStore,
         llm_provider: LLMProvider,
         generator: CandidateGenerator,
@@ -38,9 +37,9 @@ class CapabilityFactoryService:
         report_writer: ReportWriter,
         search_planner: BeamSearchPlanner,
         git_manager: GitRepositoryManager,
+        plugin_loader: PluginLoader,
     ):
         self.settings = settings
-        self.dataset_loader = dataset_loader
         self.knowledge_store = knowledge_store
         self.llm_provider = llm_provider
         self.generator = generator
@@ -49,6 +48,7 @@ class CapabilityFactoryService:
         self.report_writer = report_writer
         self.search_planner = search_planner
         self.git_manager = git_manager
+        self.plugin_loader = plugin_loader
 
     @property
     def provider_name(self) -> str:
@@ -57,17 +57,18 @@ class CapabilityFactoryService:
     @classmethod
     def build(cls, settings: AppSettings) -> "CapabilityFactoryService":
         settings.ensure_directories()
+        plugin_loader = PluginLoader(settings.project_root)
         return cls(
             settings=settings,
-            dataset_loader=MovieLensDatasetLoader(settings.data_dir / "movielens_sample"),
             knowledge_store=KnowledgeGraphStore(settings.knowledge_dir),
             llm_provider=create_provider(settings),
             generator=CandidateGenerator(settings),
-            validator=CandidateValidator(),
+            validator=CandidateValidator(settings, plugin_loader),
             repair_agent=RepairAgent(settings),
             report_writer=ReportWriter(settings),
-            search_planner=BeamSearchPlanner(beam_width=settings.beam_width),
+            search_planner=BeamSearchPlanner(plugin_loader, beam_width=settings.beam_width),
             git_manager=GitRepositoryManager(settings.project_root),
+            plugin_loader=plugin_loader,
         )
 
     def make_task_id(self) -> str:
@@ -78,8 +79,10 @@ class CapabilityFactoryService:
         resolved_task_id = task_id or self.make_task_id()
         git_context = self.git_manager.status()
         capability_version = git_context.head_commit[:8] if git_context.head_commit else f"draft-{resolved_task_id}"
-        dataset = self.dataset_loader.load()
         parsed_intent = self.llm_provider.parse_capability(request)
+        profile_manifest = self.plugin_loader.get_profile_for_task_type(parsed_intent.task_type)
+        profile = profile_manifest.profile_class()
+        dataset = profile.load_dataset(self.settings, parsed_intent)
         retrieved_knowledge = self.knowledge_store.retrieve(parsed_intent)
         search_result = self.search_planner.search(
             spec=parsed_intent,
@@ -89,9 +92,13 @@ class CapabilityFactoryService:
         agent_trace = [
             SearchTraceStep(
                 agent="IntentParser",
-                summary="Parsed natural-language capability into a structured recommendation spec.",
+                summary="Parsed natural-language capability into a structured task specification.",
                 score=0.0,
-                state={"task_name": parsed_intent.task_name, "task_type": parsed_intent.task_type},
+                state={
+                    "task_name": parsed_intent.task_name,
+                    "task_type": parsed_intent.task_type,
+                    "dataset_name": parsed_intent.dataset_name,
+                },
             ),
             SearchTraceStep(
                 agent="KnowledgeRetriever",
@@ -100,6 +107,7 @@ class CapabilityFactoryService:
                 state={
                     "algorithms": [node.node_id for node in retrieved_knowledge.algorithms],
                     "metrics": [node.node_id for node in retrieved_knowledge.metrics],
+                    "profile_key": profile_manifest.key,
                 },
             ),
             *search_result.trace,
@@ -123,7 +131,12 @@ class CapabilityFactoryService:
                 spec=parsed_intent,
                 plan=plan,
             )
-            report = self.validator.validate(candidate, dataset, top_k=request.top_k)
+            report = self.validator.validate(
+                candidate,
+                dataset,
+                top_k=request.top_k,
+                profile_key=profile_manifest.key,
+            )
             attempts = 0
 
             while not report.success and attempts < self.settings.max_repair_attempts:
@@ -153,7 +166,12 @@ class CapabilityFactoryService:
                         "plan_summary": plan.plan_summary,
                     }
                 )
-                report = self.validator.validate(candidate, dataset, top_k=request.top_k)
+                report = self.validator.validate(
+                    candidate,
+                    dataset,
+                    top_k=request.top_k,
+                    profile_key=profile_manifest.key,
+                )
 
             candidates.append(
                 candidate.model_copy(

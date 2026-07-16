@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 import ast
-import importlib.util
-import math
-import time
-import tracemalloc
-import uuid
+import json
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
-from app.data import RecommendationDataset
+from app.data import ClassificationDataset, RecommendationDataset
 from app.models import AlgorithmCandidate, ValidationMetrics, ValidationReport
+from app.plugin_loader import PluginLoader
+from app.settings import AppSettings
 
 
 SAFE_IMPORTS = {"__future__", "collections", "math", "pandas"}
@@ -44,13 +45,29 @@ class SafetyVisitor(ast.NodeVisitor):
 
 
 class CandidateValidator:
-    def validate(self, candidate: AlgorithmCandidate, dataset: RecommendationDataset, top_k: int) -> ValidationReport:
+    def __init__(
+        self,
+        settings: AppSettings | None = None,
+        plugin_loader: PluginLoader | None = None,
+    ) -> None:
+        self.runtime_root = Path(__file__).resolve().parents[1]
+        self.settings = settings or AppSettings.from_env(self.runtime_root)
+        self.plugin_loader = plugin_loader or PluginLoader(self.settings.project_root)
+
+    def validate(
+        self,
+        candidate: AlgorithmCandidate,
+        dataset: RecommendationDataset | ClassificationDataset,
+        top_k: int,
+        profile_key: str | None = None,
+    ) -> ValidationReport:
         return self.validate_path(
             candidate_id=candidate.candidate_id,
             algorithm_key=candidate.algorithm_key,
             code_path=Path(candidate.code_path),
             dataset=dataset,
             top_k=top_k,
+            profile_key=profile_key,
         )
 
     def validate_path(
@@ -58,155 +75,95 @@ class CandidateValidator:
         candidate_id: str,
         algorithm_key: str,
         code_path: Path,
-        dataset: RecommendationDataset,
+        dataset: RecommendationDataset | ClassificationDataset,
         top_k: int,
+        profile_key: str | None = None,
     ) -> ValidationReport:
-        errors: list[str] = []
-        warnings: list[str] = []
-        metrics = ValidationMetrics()
-        interface_ok = False
-        stability_ok = False
-
         try:
             source_code = code_path.read_text(encoding="utf-8")
         except OSError as exc:
-            errors.append(f"Could not read candidate code: {exc}")
-            return self._build_report(
-                candidate_id, algorithm_key, code_path, interface_ok, stability_ok, metrics, errors, warnings
-            )
+            return self._failure_report(candidate_id, algorithm_key, code_path, [f"Could not read candidate code: {exc}"])
 
         safety_errors = self._scan_safety(source_code)
         if safety_errors:
-            errors.extend(safety_errors)
-            return self._build_report(
-                candidate_id, algorithm_key, code_path, interface_ok, stability_ok, metrics, errors, warnings
+            return self._failure_report(candidate_id, algorithm_key, code_path, safety_errors)
+
+        resolved_profile_key = profile_key or self._infer_profile_key(dataset, algorithm_key)
+        profile_manifest = self.plugin_loader.get_validation_profile(resolved_profile_key)
+        profile = profile_manifest.profile_class()
+
+        with tempfile.TemporaryDirectory(prefix="capability-validator-") as temp_root_raw:
+            temp_root = Path(temp_root_raw)
+            dataset_dir = temp_root / "dataset"
+            manifest_path = temp_root / "manifest.json"
+            profile.serialize_dataset(dataset, dataset_dir)
+            manifest_path.write_text(
+                json.dumps(
+                    {
+                        "project_root": str(self.settings.project_root),
+                        "profile_key": resolved_profile_key,
+                        "candidate_id": candidate_id,
+                        "algorithm_key": algorithm_key,
+                        "code_path": str(code_path.resolve()),
+                        "dataset_dir": str(dataset_dir.resolve()),
+                        "top_k": top_k,
+                        "sandbox_timeout_seconds": self.settings.sandbox_timeout_seconds,
+                        "sandbox_memory_limit_mb": self.settings.sandbox_memory_limit_mb,
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            try:
+                completed = subprocess.run(
+                    [sys.executable, "-m", "app.sandbox_worker", str(manifest_path)],
+                    cwd=self.runtime_root,
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=self.settings.sandbox_timeout_seconds + 5,
+                )
+            except subprocess.TimeoutExpired:
+                return self._failure_report(
+                    candidate_id,
+                    algorithm_key,
+                    code_path,
+                    [f"Sandbox execution timed out after {self.settings.sandbox_timeout_seconds} seconds."],
+                    profile_name=resolved_profile_key,
+                )
+
+        stdout = completed.stdout.strip()
+        stderr = completed.stderr.strip()
+        if completed.returncode != 0:
+            message = stderr or stdout or "Sandbox execution failed."
+            return self._failure_report(
+                candidate_id,
+                algorithm_key,
+                code_path,
+                [message],
+                profile_name=resolved_profile_key,
+            )
+        if not stdout:
+            return self._failure_report(
+                candidate_id,
+                algorithm_key,
+                code_path,
+                ["Sandbox execution produced no validation report."],
+                profile_name=resolved_profile_key,
             )
 
         try:
-            module = self._load_module(code_path)
-        except Exception as exc:  # pragma: no cover - importlib messages vary
-            errors.append(f"Import failed: {exc}")
-            return self._build_report(
-                candidate_id, algorithm_key, code_path, interface_ok, stability_ok, metrics, errors, warnings
-            )
-
-        recommender_class = getattr(module, "GeneratedRecommender", None)
-        if recommender_class is None:
-            errors.append("GeneratedRecommender class is missing.")
-            return self._build_report(
-                candidate_id, algorithm_key, code_path, interface_ok, stability_ok, metrics, errors, warnings
-            )
-
-        try:
-            recommender = recommender_class()
+            return ValidationReport.model_validate_json(stdout)
         except Exception as exc:
-            errors.append(f"Instantiation failed: {exc}")
-            return self._build_report(
-                candidate_id, algorithm_key, code_path, interface_ok, stability_ok, metrics, errors, warnings
+            message = stderr or f"Could not parse sandbox validation report: {exc}"
+            return self._failure_report(
+                candidate_id,
+                algorithm_key,
+                code_path,
+                [message],
+                profile_name=resolved_profile_key,
             )
-
-        missing_methods = [name for name in ("fit", "recommend", "batch_recommend") if not hasattr(recommender, name)]
-        if missing_methods:
-            errors.append(f"Missing interface methods: {', '.join(missing_methods)}")
-            return self._build_report(
-                candidate_id, algorithm_key, code_path, interface_ok, stability_ok, metrics, errors, warnings
-            )
-
-        try:
-            recommender.fit(dataset.train_df.copy())
-            interface_ok = True
-            sample_user = next(iter(dataset.test_truth))
-            single_recommendations = recommender.recommend(sample_user, k=top_k)
-            tracemalloc.start()
-            batch_start = time.perf_counter()
-            batch_recommendations = recommender.batch_recommend(sorted(dataset.test_truth), k=top_k)
-            elapsed = time.perf_counter() - batch_start
-            _current_allocated, peak_allocated = tracemalloc.get_traced_memory()
-            tracemalloc.stop()
-            second_pass = recommender.batch_recommend(sorted(dataset.test_truth), k=top_k)
-        except Exception as exc:
-            if tracemalloc.is_tracing():
-                tracemalloc.stop()
-            errors.append(f"Execution failed: {exc}")
-            return self._build_report(
-                candidate_id, algorithm_key, code_path, interface_ok, stability_ok, metrics, errors, warnings
-            )
-
-        if not isinstance(single_recommendations, list):
-            errors.append("recommend() must return a list of item ids.")
-        if not isinstance(batch_recommendations, dict):
-            errors.append("batch_recommend() must return a dict keyed by user id.")
-
-        if errors:
-            return self._build_report(
-                candidate_id, algorithm_key, code_path, interface_ok, stability_ok, metrics, errors, warnings
-            )
-
-        normalized_batch: dict[int, list[int]] = {}
-        for user_id in sorted(dataset.test_truth):
-            raw_items = batch_recommendations.get(user_id)
-            if raw_items is None:
-                errors.append(f"batch_recommend() missing user {user_id}.")
-                continue
-            if not isinstance(raw_items, list):
-                errors.append(f"Recommendations for user {user_id} must be a list.")
-                continue
-            normalized_items = [int(item_id) for item_id in raw_items]
-            seen_items = set(dataset.user_histories.get(int(user_id), []))
-            if any(item_id in seen_items for item_id in normalized_items):
-                errors.append(f"Seen item leakage for user {user_id}.")
-            if len(set(normalized_items)) != len(normalized_items):
-                errors.append(f"Duplicate recommendations for user {user_id}.")
-            if len(normalized_items) == 0:
-                errors.append(f"Empty recommendation list for user {user_id}.")
-            if len(normalized_items) > top_k:
-                errors.append(f"Recommendation list exceeds top_k for user {user_id}.")
-            if len(normalized_items) < top_k:
-                warnings.append(f"Recommendation list shorter than top_k for user {user_id}.")
-            normalized_batch[int(user_id)] = normalized_items
-
-        stability_ok = batch_recommendations == second_pass
-        if not stability_ok:
-            warnings.append("Recommendations are not deterministic across repeated calls.")
-
-        if errors:
-            return self._build_report(
-                candidate_id, algorithm_key, code_path, interface_ok, stability_ok, metrics, errors, warnings
-            )
-
-        metrics = self._compute_metrics(normalized_batch, dataset, elapsed, top_k)
-        metrics.peak_allocated_kb = round(peak_allocated / 1024, 6)
-        return self._build_report(
-            candidate_id, algorithm_key, code_path, interface_ok, stability_ok, metrics, errors, warnings
-        )
-
-    def _build_report(
-        self,
-        candidate_id: str,
-        algorithm_key: str,
-        code_path: Path,
-        interface_ok: bool,
-        stability_ok: bool,
-        metrics: ValidationMetrics,
-        errors: list[str],
-        warnings: list[str],
-    ) -> ValidationReport:
-        success = interface_ok and not errors
-        score = 0.0
-        if success:
-            score = (metrics.recall_at_k * 0.55) + (metrics.ndcg_at_k * 0.35) + (metrics.coverage * 0.10)
-        return ValidationReport(
-            candidate_id=candidate_id,
-            algorithm_key=algorithm_key,
-            success=success,
-            interface_ok=interface_ok,
-            stability_ok=stability_ok,
-            code_path=str(code_path),
-            score=round(score, 6),
-            metrics=metrics,
-            errors=errors,
-            warnings=warnings,
-        )
 
     def _scan_safety(self, source_code: str) -> list[str]:
         try:
@@ -217,45 +174,44 @@ class CandidateValidator:
         visitor.visit(tree)
         return visitor.errors
 
-    def _load_module(self, code_path: Path):
-        module_name = f"generated_candidate_{uuid.uuid4().hex}"
-        spec = importlib.util.spec_from_file_location(module_name, code_path)
-        if spec is None or spec.loader is None:
-            raise ImportError(f"Could not create module spec for {code_path}")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
-
-    def _compute_metrics(
+    def _infer_profile_key(
         self,
-        predictions: dict[int, list[int]],
-        dataset: RecommendationDataset,
-        elapsed_seconds: float,
-        top_k: int,
-    ) -> ValidationMetrics:
-        recall_scores: list[float] = []
-        ndcg_scores: list[float] = []
-        recommended_items: set[int] = set()
+        dataset: RecommendationDataset | ClassificationDataset,
+        algorithm_key: str,
+    ) -> str:
+        if isinstance(dataset, RecommendationDataset):
+            return "top_k_recommendation"
+        if isinstance(dataset, ClassificationDataset):
+            return "tabular_classification"
 
-        for user_id, truth_items in dataset.test_truth.items():
-            predicted_items = predictions.get(int(user_id), [])[:top_k]
-            recommended_items.update(predicted_items)
-            hits = [item_id for item_id in predicted_items if item_id in truth_items]
-            recall_scores.append(len(hits) / len(truth_items) if truth_items else 0.0)
+        try:
+            plugin = self.plugin_loader.get_algorithm_plugin(algorithm_key)
+        except KeyError:
+            return "top_k_recommendation"
+        if "tabular_classification" in plugin.task_types:
+            return "tabular_classification"
+        return "top_k_recommendation"
 
-            dcg = 0.0
-            for rank, item_id in enumerate(predicted_items, start=1):
-                if item_id in truth_items:
-                    dcg += 1.0 / math.log2(rank + 1)
-            ideal_hits = min(len(truth_items), top_k)
-            idcg = sum(1.0 / math.log2(rank + 1) for rank in range(1, ideal_hits + 1))
-            ndcg_scores.append(dcg / idcg if idcg else 0.0)
-
-        coverage = len(recommended_items) / max(dataset.item_count, 1)
-        average_latency_ms = (elapsed_seconds / max(len(predictions), 1)) * 1000
-        return ValidationMetrics(
-            recall_at_k=round(sum(recall_scores) / len(recall_scores), 6),
-            ndcg_at_k=round(sum(ndcg_scores) / len(ndcg_scores), 6),
-            coverage=round(coverage, 6),
-            average_latency_ms=round(average_latency_ms, 6),
+    def _failure_report(
+        self,
+        candidate_id: str,
+        algorithm_key: str,
+        code_path: Path,
+        errors: list[str],
+        warnings: list[str] | None = None,
+        profile_name: str = "",
+    ) -> ValidationReport:
+        return ValidationReport(
+            candidate_id=candidate_id,
+            algorithm_key=algorithm_key,
+            profile_name=profile_name,
+            success=False,
+            interface_ok=False,
+            stability_ok=False,
+            code_path=str(code_path),
+            execution_mode="subprocess_sandbox",
+            score=0.0,
+            metrics=ValidationMetrics(),
+            errors=errors,
+            warnings=warnings or [],
         )

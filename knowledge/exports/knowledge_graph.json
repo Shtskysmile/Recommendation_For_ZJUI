@@ -18,10 +18,34 @@
       ]
     },
     {
+      "id": "capability::tabular_classification",
+      "type": "Capability",
+      "name": "Tabular Classification Replication",
+      "description": "Replicate a tabular classification workflow for customer churn and similar binary prediction tasks.",
+      "keywords": [
+        "classification",
+        "churn",
+        "tabular",
+        "binary",
+        "prediction",
+        "accuracy",
+        "precision",
+        "recall",
+        "f1"
+      ]
+    },
+    {
       "id": "task::movie_homepage",
       "type": "TaskType",
       "name": "Movie Homepage Recommendation",
       "description": "Homepage or browse-page recommendation for movie platforms.",
+      "keywords": []
+    },
+    {
+      "id": "task::customer_churn",
+      "type": "TaskType",
+      "name": "Customer Churn Prediction",
+      "description": "Binary classification for customer churn risk in subscription businesses.",
       "keywords": []
     },
     {
@@ -72,6 +96,38 @@
       ]
     },
     {
+      "id": "algorithm::majority_class",
+      "type": "Algorithm",
+      "name": "Majority Classifier",
+      "description": "Baseline classifier that predicts the majority label from the training split.",
+      "keywords": [
+        "baseline",
+        "classification",
+        "tabular",
+        "churn",
+        "majority",
+        "local",
+        "cpu"
+      ]
+    },
+    {
+      "id": "algorithm::risk_score",
+      "type": "Algorithm",
+      "name": "Risk Score Classifier",
+      "description": "Weighted feature score classifier for churn-style binary prediction.",
+      "keywords": [
+        "classification",
+        "churn",
+        "scorecard",
+        "tabular",
+        "explainable",
+        "f1",
+        "accuracy",
+        "local",
+        "cpu"
+      ]
+    },
+    {
       "id": "metric::recall_at_k",
       "type": "Metric",
       "name": "Recall@K",
@@ -93,6 +149,34 @@
       "keywords": []
     },
     {
+      "id": "metric::accuracy",
+      "type": "Metric",
+      "name": "Accuracy",
+      "description": "Overall fraction of correctly predicted labels.",
+      "keywords": []
+    },
+    {
+      "id": "metric::precision",
+      "type": "Metric",
+      "name": "Precision",
+      "description": "Fraction of predicted positives that are true positives.",
+      "keywords": []
+    },
+    {
+      "id": "metric::recall",
+      "type": "Metric",
+      "name": "Recall",
+      "description": "Fraction of true positives that are correctly predicted.",
+      "keywords": []
+    },
+    {
+      "id": "metric::f1",
+      "type": "Metric",
+      "name": "F1 Score",
+      "description": "Harmonic mean of precision and recall.",
+      "keywords": []
+    },
+    {
       "id": "constraint::implicit_feedback",
       "type": "Constraint",
       "name": "Implicit Feedback Only",
@@ -104,6 +188,13 @@
       "type": "Constraint",
       "name": "Local CPU Execution",
       "description": "Algorithm must run on local CPU without external services.",
+      "keywords": []
+    },
+    {
+      "id": "constraint::tabular_features",
+      "type": "Constraint",
+      "name": "Structured Tabular Features",
+      "description": "Inputs are structured tabular features with a binary target.",
       "keywords": []
     },
     {
@@ -128,6 +219,20 @@
       "keywords": []
     },
     {
+      "id": "template::majority_class_py",
+      "type": "CodeTemplate",
+      "name": "Majority Class Python Template",
+      "description": "Template for the majority-label churn baseline.",
+      "keywords": []
+    },
+    {
+      "id": "template::risk_score_py",
+      "type": "CodeTemplate",
+      "name": "Risk Score Python Template",
+      "description": "Template for the weighted churn risk classifier.",
+      "keywords": []
+    },
+    {
       "id": "failure::seen_items",
       "type": "FailurePattern",
       "name": "Seen Item Leakage",
@@ -149,54 +254,18 @@
       "keywords": []
     },
     {
-      "id": "validation::sample-topk-movielens",
-      "type": "ValidationResult",
-      "name": "Validation sample-topk-movielens",
-      "description": "Best candidate: itemcf-1",
-      "best_candidate_id": "itemcf-1",
-      "task_name": "movie_homepage",
-      "capability_version": "87dbc0ec",
-      "reports": [
-        {
-          "candidate_id": "itemcf-1",
-          "algorithm_key": "itemcf",
-          "success": true,
-          "score": 1.0,
-          "metrics": {
-            "recall_at_k": 1.0,
-            "ndcg_at_k": 1.0,
-            "coverage": 1.0,
-            "average_latency_ms": 0.009444,
-            "peak_allocated_kb": 1.703125
-          }
-        },
-        {
-          "candidate_id": "popularity-2",
-          "algorithm_key": "popularity",
-          "success": true,
-          "score": 0.301667,
-          "metrics": {
-            "recall_at_k": 0.333333,
-            "ndcg_at_k": 0.166667,
-            "coverage": 0.6,
-            "average_latency_ms": 0.001788,
-            "peak_allocated_kb": 1.617188
-          }
-        },
-        {
-          "candidate_id": "genre_affinity-3",
-          "algorithm_key": "genre_affinity",
-          "success": true,
-          "score": 0.985417,
-          "metrics": {
-            "recall_at_k": 1.0,
-            "ndcg_at_k": 0.958333,
-            "coverage": 1.0,
-            "average_latency_ms": 0.019257,
-            "peak_allocated_kb": 1.820312
-          }
-        }
-      ]
+      "id": "failure::prediction_length",
+      "type": "FailurePattern",
+      "name": "Prediction Length Mismatch",
+      "description": "The number of predicted labels does not match the evaluation set size.",
+      "keywords": []
+    },
+    {
+      "id": "failure::label_cast",
+      "type": "FailurePattern",
+      "name": "Non-Numeric Label Output",
+      "description": "Predicted labels are not compatible with integer binary targets.",
+      "keywords": []
     }
   ],
   "edges": [
@@ -218,6 +287,21 @@
     {
       "source": "capability::topk_recommendation",
       "target": "algorithm::genre_affinity",
+      "type": "uses"
+    },
+    {
+      "source": "capability::tabular_classification",
+      "target": "task::customer_churn",
+      "type": "supports"
+    },
+    {
+      "source": "capability::tabular_classification",
+      "target": "algorithm::majority_class",
+      "type": "uses"
+    },
+    {
+      "source": "capability::tabular_classification",
+      "target": "algorithm::risk_score",
       "type": "uses"
     },
     {
@@ -271,6 +355,66 @@
       "type": "implemented_by"
     },
     {
+      "source": "algorithm::majority_class",
+      "target": "metric::accuracy",
+      "type": "evaluated_by"
+    },
+    {
+      "source": "algorithm::majority_class",
+      "target": "metric::f1",
+      "type": "evaluated_by"
+    },
+    {
+      "source": "algorithm::majority_class",
+      "target": "constraint::tabular_features",
+      "type": "fits"
+    },
+    {
+      "source": "algorithm::majority_class",
+      "target": "constraint::local_cpu",
+      "type": "fits"
+    },
+    {
+      "source": "algorithm::majority_class",
+      "target": "template::majority_class_py",
+      "type": "implemented_by"
+    },
+    {
+      "source": "algorithm::risk_score",
+      "target": "metric::accuracy",
+      "type": "evaluated_by"
+    },
+    {
+      "source": "algorithm::risk_score",
+      "target": "metric::precision",
+      "type": "evaluated_by"
+    },
+    {
+      "source": "algorithm::risk_score",
+      "target": "metric::recall",
+      "type": "evaluated_by"
+    },
+    {
+      "source": "algorithm::risk_score",
+      "target": "metric::f1",
+      "type": "evaluated_by"
+    },
+    {
+      "source": "algorithm::risk_score",
+      "target": "constraint::tabular_features",
+      "type": "fits"
+    },
+    {
+      "source": "algorithm::risk_score",
+      "target": "constraint::local_cpu",
+      "type": "fits"
+    },
+    {
+      "source": "algorithm::risk_score",
+      "target": "template::risk_score_py",
+      "type": "implemented_by"
+    },
+    {
       "source": "failure::seen_items",
       "target": "algorithm::popularity",
       "type": "suggests_fix"
@@ -291,30 +435,14 @@
       "type": "suggests_fix"
     },
     {
-      "source": "validation::sample-topk-movielens",
-      "target": "capability::topk_recommendation",
-      "type": "verifies"
+      "source": "failure::prediction_length",
+      "target": "algorithm::majority_class",
+      "type": "suggests_fix"
     },
     {
-      "source": "validation::sample-topk-movielens",
-      "target": "algorithm::itemcf",
-      "type": "evaluated",
-      "success": true,
-      "score": 1.0
-    },
-    {
-      "source": "validation::sample-topk-movielens",
-      "target": "algorithm::popularity",
-      "type": "evaluated",
-      "success": true,
-      "score": 0.301667
-    },
-    {
-      "source": "validation::sample-topk-movielens",
-      "target": "algorithm::genre_affinity",
-      "type": "evaluated",
-      "success": true,
-      "score": 0.985417
+      "source": "failure::label_cast",
+      "target": "algorithm::risk_score",
+      "type": "suggests_fix"
     }
   ]
 }

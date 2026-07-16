@@ -1,0 +1,11 @@
+{
+  "key": "majority_class",
+  "display_name": "Majority Classifier",
+  "summary": "Predict the majority label from the training set as a classification baseline.",
+  "rationale": "Provides a deterministic baseline for tabular classification and sanity-checks the validation profile.",
+  "family": "baseline",
+  "strengths": ["baseline", "simplicity", "local_cpu"],
+  "search_hints": ["baseline", "classification", "tabular", "local cpu"],
+  "task_types": ["tabular_classification"],
+  "renderer_path": "app.template_library:render_majority_class_template"
+}

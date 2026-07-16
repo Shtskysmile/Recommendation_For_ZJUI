@@ -5,8 +5,8 @@ from abc import ABC, abstractmethod
 
 import httpx
 
-from app.algorithm_registry import ALGORITHM_REGISTRY
 from app.models import CapabilitySpec, CandidatePlan, GenerationRequest, RetrievedKnowledge
+from app.plugin_loader import PluginLoader
 from app.settings import AppSettings
 
 
@@ -36,25 +36,65 @@ def _normalize_algorithm_key(value: str) -> str:
     return normalized
 
 
+def _normalize_list(value, fallback: list[str]) -> list[str]:
+    if value is None:
+        return fallback
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    if isinstance(value, str):
+        return [part.strip() for part in value.split(",") if part.strip()]
+    return [str(value)]
+
+
+def _normalize_task_type(value: str | None, request: GenerationRequest) -> str:
+    requested = (value or request.task_type or "").strip().lower()
+    if requested in {"top_k_recommendation", "tabular_classification"}:
+        return requested
+    if any(token in requested for token in ("classification", "churn", "分类", "流失")):
+        return "tabular_classification"
+    return "top_k_recommendation"
+
+
+def _default_dataset_name(task_type: str) -> str:
+    return "churn_sample" if task_type == "tabular_classification" else "movielens_sample"
+
+
 def _normalize_capability_payload(payload: dict, request: GenerationRequest) -> CapabilitySpec:
-    constraints = payload.get("constraints", request.constraints)
-    success_metrics = payload.get("success_metrics", ["recall@k", "ndcg@k", "coverage"])
-    preferred_algorithms = payload.get("preferred_algorithms", ["itemcf", "popularity"])
+    task_type = _normalize_task_type(payload.get("task_type"), request)
+    default_metrics = (
+        ["accuracy", "precision", "recall", "f1"]
+        if task_type == "tabular_classification"
+        else ["recall@k", "ndcg@k", "coverage"]
+    )
+    default_algorithms = (
+        ["risk_score", "majority_class"]
+        if task_type == "tabular_classification"
+        else ["itemcf", "popularity"]
+    )
+    constraints = _normalize_list(payload.get("constraints"), request.constraints)
+    success_metrics = _normalize_list(payload.get("success_metrics"), default_metrics)
+    preferred_algorithms = _normalize_list(payload.get("preferred_algorithms"), default_algorithms)
     return CapabilitySpec(
         task_name=str(payload.get("task_name") or request.task_name),
         objective=str(payload.get("objective") or request.capability_description.strip()),
-        task_type=str(payload.get("task_type") or "top_k_recommendation"),
+        task_type=task_type,
+        dataset_name=str(payload.get("dataset_name") or request.dataset_name or _default_dataset_name(task_type)),
         top_k=int(payload.get("top_k") or request.top_k),
-        constraints=[str(item) for item in constraints],
-        success_metrics=[str(item) for item in success_metrics],
-        preferred_algorithms=[_normalize_algorithm_key(str(item)) for item in preferred_algorithms],
-        data_profile=_stringify_data_profile(payload.get("data_profile", "movielens implicit feedback")),
+        constraints=constraints,
+        success_metrics=success_metrics,
+        preferred_algorithms=[_normalize_algorithm_key(item) for item in preferred_algorithms],
+        data_profile=_stringify_data_profile(
+            payload.get(
+                "data_profile",
+                "customer churn tabular classification" if task_type == "tabular_classification" else "movielens implicit feedback",
+            )
+        ),
     )
 
 
-def _normalize_candidate_plan(payload: dict, algorithm_key: str, search_score: float) -> CandidatePlan:
+def _normalize_candidate_plan(plugin_loader: PluginLoader, payload: dict, algorithm_key: str, search_score: float) -> CandidatePlan:
     normalized_key = _normalize_algorithm_key(payload.get("algorithm_key") or algorithm_key)
-    descriptor = ALGORITHM_REGISTRY[normalized_key]
+    descriptor = plugin_loader.get_algorithm_plugin(normalized_key)
     return CandidatePlan(
         algorithm_key=normalized_key,
         display_name=str(payload.get("display_name") or descriptor.display_name),
@@ -89,22 +129,32 @@ class LLMProvider(ABC):
 class MockLLMProvider(LLMProvider):
     name = "mock"
 
+    def __init__(self, settings: AppSettings):
+        self.plugin_loader = PluginLoader(settings.project_root)
+
     def parse_capability(self, request: GenerationRequest) -> CapabilitySpec:
-        metrics = ["recall@k", "ndcg@k", "coverage"]
         description = request.capability_description.lower()
-        preferred_algorithms = ["itemcf", "popularity"]
-        if any(token in description for token in ("genre", "content", "explain")):
-            preferred_algorithms.insert(1, "genre_affinity")
-        return CapabilitySpec(
-            task_name=request.task_name,
-            objective=request.capability_description.strip(),
-            task_type="top_k_recommendation",
-            top_k=request.top_k,
-            constraints=request.constraints,
-            success_metrics=metrics,
-            preferred_algorithms=preferred_algorithms,
-            data_profile="movielens implicit feedback",
-        )
+        task_type = _normalize_task_type(request.task_type or description, request)
+        payload = {
+            "task_name": request.task_name,
+            "objective": request.capability_description.strip(),
+            "task_type": task_type,
+            "dataset_name": request.dataset_name or _default_dataset_name(task_type),
+            "top_k": request.top_k,
+            "constraints": request.constraints,
+        }
+        if task_type == "tabular_classification":
+            payload["success_metrics"] = ["accuracy", "precision", "recall", "f1"]
+            payload["preferred_algorithms"] = ["risk_score", "majority_class"]
+            payload["data_profile"] = "customer churn tabular classification"
+        else:
+            preferred_algorithms = ["itemcf", "popularity"]
+            if any(token in description for token in ("genre", "content", "explain")):
+                preferred_algorithms.insert(1, "genre_affinity")
+            payload["success_metrics"] = ["recall@k", "ndcg@k", "coverage"]
+            payload["preferred_algorithms"] = preferred_algorithms
+            payload["data_profile"] = "movielens implicit feedback"
+        return _normalize_capability_payload(payload, request)
 
     def explain_algorithm(
         self,
@@ -113,7 +163,7 @@ class MockLLMProvider(LLMProvider):
         algorithm_key: str,
         search_score: float,
     ) -> CandidatePlan:
-        descriptor = ALGORITHM_REGISTRY[algorithm_key]
+        descriptor = self.plugin_loader.get_algorithm_plugin(algorithm_key)
         return CandidatePlan(
             algorithm_key=algorithm_key,
             display_name=descriptor.display_name,
@@ -135,7 +185,8 @@ class OpenAICompatibleLLMProvider(LLMProvider):
         self.api_key = settings.openai_api_key
         self.model = settings.openai_model
         self.timeout = settings.request_timeout_seconds
-        self.fallback_provider = MockLLMProvider()
+        self.plugin_loader = PluginLoader(settings.project_root)
+        self.fallback_provider = MockLLMProvider(settings)
         self.name = (
             "siliconflow-openai-compatible"
             if "siliconflow.cn" in self.base_url
@@ -170,8 +221,9 @@ class OpenAICompatibleLLMProvider(LLMProvider):
 
     def parse_capability(self, request: GenerationRequest) -> CapabilitySpec:
         system_prompt = (
-            "You are extracting a structured Top-K recommendation task spec. "
-            "Return JSON with keys: task_name, objective, task_type, top_k, constraints, "
+            "You are extracting a structured algorithm capability specification. "
+            "The task_type must be either top_k_recommendation or tabular_classification. "
+            "Return JSON with keys: task_name, objective, task_type, dataset_name, top_k, constraints, "
             "success_metrics, preferred_algorithms, data_profile."
         )
         user_prompt = json.dumps(request.model_dump(), ensure_ascii=False)
@@ -188,9 +240,9 @@ class OpenAICompatibleLLMProvider(LLMProvider):
         algorithm_key: str,
         search_score: float,
     ) -> CandidatePlan:
-        descriptor = ALGORITHM_REGISTRY[algorithm_key]
+        descriptor = self.plugin_loader.get_algorithm_plugin(algorithm_key)
         system_prompt = (
-            "You are explaining a recommendation-system algorithm choice. "
+            "You are explaining an algorithm choice in an AI capability factory. "
             "Return JSON with keys: algorithm_key, display_name, rationale, plan_summary, design_explanation."
         )
         user_prompt = json.dumps(
@@ -210,7 +262,7 @@ class OpenAICompatibleLLMProvider(LLMProvider):
         )
         try:
             payload = self._json_completion(system_prompt, user_prompt)
-            return _normalize_candidate_plan(payload, algorithm_key, search_score)
+            return _normalize_candidate_plan(self.plugin_loader, payload, algorithm_key, search_score)
         except Exception:
             plan = self.fallback_provider.explain_algorithm(spec, knowledge, algorithm_key, search_score)
             return plan.model_copy(
@@ -226,4 +278,4 @@ class OpenAICompatibleLLMProvider(LLMProvider):
 def create_provider(settings: AppSettings) -> LLMProvider:
     if settings.llm_provider in {"openai", "siliconflow"}:
         return OpenAICompatibleLLMProvider(settings)
-    return MockLLMProvider()
+    return MockLLMProvider(settings)

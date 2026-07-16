@@ -1,0 +1,7 @@
+{
+  "key": "tabular_classification",
+  "display_name": "Tabular Classification Validation",
+  "description": "Validation profile for tabular binary classification tasks.",
+  "task_types": ["tabular_classification"],
+  "class_path": "app.profile_library:TabularClassificationProfile"
+}

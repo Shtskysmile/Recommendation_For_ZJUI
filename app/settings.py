@@ -22,6 +22,8 @@ class AppSettings:
     top_k_default: int = 10
     request_timeout_seconds: float = 30.0
     beam_width: int = 3
+    sandbox_timeout_seconds: float = 20.0
+    sandbox_memory_limit_mb: int = 512
 
     def ensure_directories(self) -> None:
         for path in (
@@ -56,6 +58,8 @@ class AppSettings:
             top_k_default=int(os.getenv("TOP_K_DEFAULT", "10")),
             request_timeout_seconds=float(os.getenv("OPENAI_TIMEOUT_SECONDS", "30")),
             beam_width=int(os.getenv("BEAM_WIDTH", "3")),
+            sandbox_timeout_seconds=float(os.getenv("SANDBOX_TIMEOUT_SECONDS", "20")),
+            sandbox_memory_limit_mb=int(os.getenv("SANDBOX_MEMORY_LIMIT_MB", "512")),
         )
         settings.ensure_directories()
         return settings

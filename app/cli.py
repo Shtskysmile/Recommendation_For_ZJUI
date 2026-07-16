@@ -23,6 +23,8 @@ def build_parser() -> argparse.ArgumentParser:
     task_parser = subparsers.add_parser("run-task", help="Run a generation task once")
     task_parser.add_argument("--task-name", default="movie_homepage")
     task_parser.add_argument("--description", required=True)
+    task_parser.add_argument("--task-type", choices=["top_k_recommendation", "tabular_classification"])
+    task_parser.add_argument("--dataset-name")
     task_parser.add_argument("--top-k", type=int, default=5)
     task_parser.add_argument("--constraints", nargs="*", default=["implicit feedback", "local cpu"])
     task_parser.add_argument("--candidate-count", type=int, default=2)
@@ -55,6 +57,8 @@ def main() -> int:
             GenerationRequest(
                 task_name=args.task_name,
                 capability_description=args.description,
+                task_type=args.task_type,
+                dataset_name=args.dataset_name,
                 top_k=args.top_k,
                 constraints=args.constraints,
                 candidate_count=args.candidate_count,

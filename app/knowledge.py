@@ -78,6 +78,7 @@ class KnowledgeGraphStore:
                 spec.task_name,
                 spec.objective,
                 spec.task_type,
+                spec.dataset_name,
                 spec.data_profile,
                 *spec.constraints,
                 *spec.success_metrics,
@@ -208,7 +209,9 @@ class KnowledgeGraphStore:
             capability_version=capability_version or "unversioned",
             reports=report_payload,
         )
-        self.graph.add_edge(validation_node_id, "capability::topk_recommendation", type="verifies")
+        capability_node_id = self._capability_node_id(spec)
+        if self.graph.has_node(capability_node_id):
+            self.graph.add_edge(validation_node_id, capability_node_id, type="verifies")
         for report in reports:
             algorithm_node_id = f"algorithm::{report.algorithm_key}"
             if self.graph.has_node(algorithm_node_id):
@@ -235,6 +238,11 @@ class KnowledgeGraphStore:
             export_json_path=export.export_json_path,
             export_graphml_path=export.export_graphml_path,
         )
+
+    def _capability_node_id(self, spec: CapabilitySpec) -> str:
+        if spec.task_type == "tabular_classification":
+            return "capability::tabular_classification"
+        return "capability::topk_recommendation"
 
     def ingest_repo_extraction(self, result: RepoExtractionResult) -> None:
         repo_node_id = f"repo::{result.repo_name}"

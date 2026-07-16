@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
-from app.algorithm_registry import ALGORITHM_REGISTRY
 from app.models import CapabilitySpec, RetrievedKnowledge, SearchTraceStep
+from app.plugin_loader import PluginLoader
 
 
 @dataclass(slots=True)
@@ -14,11 +15,13 @@ class SearchResult:
 
 
 class BeamSearchPlanner:
-    def __init__(self, beam_width: int = 3):
+    def __init__(self, plugin_loader: PluginLoader | None = None, beam_width: int = 3):
+        self.plugin_loader = plugin_loader or PluginLoader(Path(__file__).resolve().parents[1])
         self.beam_width = max(beam_width, 1)
 
     def search(self, spec: CapabilitySpec, knowledge: RetrievedKnowledge, candidate_count: int) -> SearchResult:
-        requested_count = min(candidate_count, len(ALGORITHM_REGISTRY))
+        available_plugins = self.plugin_loader.list_algorithm_plugins(spec.task_type)
+        requested_count = min(candidate_count, len(available_plugins))
         ranked_algorithms = self._rank_algorithms(spec, knowledge)
         beam: list[tuple[list[str], float]] = [([], 0.0)]
         trace: list[SearchTraceStep] = []
@@ -64,12 +67,13 @@ class BeamSearchPlanner:
             for index, node in enumerate(knowledge.algorithms)
         }
         scores: list[tuple[str, float]] = []
-        for algorithm_key, descriptor in ALGORITHM_REGISTRY.items():
+        for plugin in self.plugin_loader.list_algorithm_plugins(spec.task_type):
+            algorithm_key = plugin.key
             score = 0.0
-            for hint in descriptor.search_hints:
+            for hint in plugin.search_hints:
                 if hint in query:
                     score += 2.0
-            for strength in descriptor.strengths:
+            for strength in plugin.strengths:
                 normalized = strength.replace("_", " ")
                 if normalized in query:
                     score += 1.5
@@ -82,6 +86,11 @@ class BeamSearchPlanner:
                     score += 4.0
                 if "implicit feedback" in query:
                     score += 1.5
+            elif algorithm_key == "risk_score":
+                if any(metric in {"accuracy", "f1", "precision", "recall"} for metric in spec.success_metrics):
+                    score += 4.0
+                if "classification" in query or "churn" in query:
+                    score += 2.0
             elif algorithm_key == "genre_affinity":
                 if any(token in query for token in ("genre", "content", "explain")):
                     score += 2.5
@@ -89,6 +98,9 @@ class BeamSearchPlanner:
             elif algorithm_key == "popularity":
                 if "coverage" in query or "cold start" in query:
                     score += 1.5
+            elif algorithm_key == "majority_class":
+                if "baseline" in query:
+                    score += 2.0
             scores.append((algorithm_key, round(score, 6)))
         scores.sort(key=lambda item: (-item[1], item[0]))
         return scores
@@ -96,6 +108,6 @@ class BeamSearchPlanner:
     def _marginal_bonus(self, sequence: list[str], algorithm_key: str) -> float:
         if not sequence:
             return 0.0
-        existing_families = {ALGORITHM_REGISTRY[key].family for key in sequence}
-        candidate_family = ALGORITHM_REGISTRY[algorithm_key].family
+        existing_families = {self.plugin_loader.get_algorithm_plugin(key).family for key in sequence}
+        candidate_family = self.plugin_loader.get_algorithm_plugin(algorithm_key).family
         return 0.7 if candidate_family not in existing_families else 0.15

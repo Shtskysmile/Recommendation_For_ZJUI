@@ -21,6 +21,30 @@ class RecommendationDataset:
         return sorted(self.catalog)
 
 
+@dataclass(slots=True)
+class ClassificationDataset:
+    train_df: pd.DataFrame
+    test_df: pd.DataFrame
+    feature_columns: list[str]
+    label_column: str
+
+    @property
+    def train_features(self) -> pd.DataFrame:
+        return self.train_df[self.feature_columns].copy()
+
+    @property
+    def test_features(self) -> pd.DataFrame:
+        return self.test_df[self.feature_columns].copy()
+
+    @property
+    def train_labels(self) -> pd.Series:
+        return self.train_df[self.label_column].copy()
+
+    @property
+    def test_labels(self) -> pd.Series:
+        return self.test_df[self.label_column].copy()
+
+
 class MovieLensDatasetLoader:
     def __init__(self, data_dir: Path):
         self.data_dir = data_dir
@@ -71,4 +95,26 @@ class MovieLensDatasetLoader:
             user_histories=user_histories,
             user_count=len(test_truth),
             item_count=len(catalog),
+        )
+
+
+class CustomerChurnDatasetLoader:
+    def __init__(self, data_dir: Path):
+        self.data_dir = data_dir
+
+    def load(self) -> ClassificationDataset:
+        dataset_path = self.data_dir / "customers.csv"
+        frame = pd.read_csv(dataset_path)
+        train_df = frame[frame["split"] == "train"].reset_index(drop=True)
+        test_df = frame[frame["split"] == "test"].reset_index(drop=True)
+        feature_columns = [
+            column
+            for column in frame.columns
+            if column not in {"customer_id", "split", "churned"}
+        ]
+        return ClassificationDataset(
+            train_df=train_df,
+            test_df=test_df,
+            feature_columns=feature_columns,
+            label_column="churned",
         )

@@ -1,0 +1,11 @@
+{
+  "key": "risk_score",
+  "display_name": "Risk Score Classifier",
+  "summary": "Build a lightweight linear risk score from class-conditional feature means for churn prediction.",
+  "rationale": "Provides a stronger tabular classification candidate while remaining dependency-light and explainable.",
+  "family": "linear_model",
+  "strengths": ["classification", "tabular", "explainability", "local_cpu"],
+  "search_hints": ["classification", "tabular", "f1", "accuracy", "churn"],
+  "task_types": ["tabular_classification"],
+  "renderer_path": "app.template_library:render_risk_score_template"
+}
