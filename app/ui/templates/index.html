@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Capability Factory</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">AI Capability Factory</p>
+          <h1>Capability Factory for Top-K Recommendation</h1>
+          <p class="lede">
+            Submit a natural-language recommendation capability, inspect the retrieved knowledge,
+            compare generated candidates, and review the validation report that gets written back
+            to the graph.
+          </p>
+        </div>
+        <div class="hero-meta">
+          <div class="meta-card">
+            <span class="meta-label">LLM Provider</span>
+            <strong id="provider-name">{{ provider_name }}</strong>
+          </div>
+          <div class="meta-card">
+            <span class="meta-label">Task Pattern</span>
+            <strong>Top-K Recommendation</strong>
+          </div>
+        </div>
+      </header>
+
+      <main class="grid">
+        <section class="panel panel-form">
+          <div class="panel-heading">
+            <h2>Generate Capability</h2>
+            <p>MovieLens-derived implicit feedback demo</p>
+          </div>
+          <form id="task-form">
+            <label>
+              <span>Task name</span>
+              <input id="task-name" name="task_name" type="text" value="movie_homepage" />
+            </label>
+            <label>
+              <span>Capability description</span>
+              <textarea id="capability-description" name="capability_description" rows="8">{{ default_description }}</textarea>
+            </label>
+            <div class="field-row">
+              <label>
+                <span>Top-K</span>
+                <input id="top-k" name="top_k" type="number" min="1" max="20" value="{{ default_top_k }}" />
+              </label>
+              <label>
+                <span>Candidate count</span>
+                <input id="candidate-count" name="candidate_count" type="number" min="1" max="2" value="2" />
+              </label>
+            </div>
+            <label>
+              <span>Constraints</span>
+              <input id="constraints" name="constraints" type="text" value="implicit feedback, local cpu" />
+            </label>
+            <button type="submit" id="submit-button">Run Capability Workflow</button>
+          </form>
+        </section>
+
+        <section class="panel panel-status">
+          <div class="panel-heading">
+            <h2>Task Status</h2>
+            <p>Async execution and polling</p>
+          </div>
+          <div class="status-strip">
+            <span class="status-label">Current state</span>
+            <span id="task-status" class="status-pill idle">Idle</span>
+          </div>
+          <div id="task-summary" class="summary-copy">
+            Submit a capability description to generate candidate recommenders and validate them.
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Parsed Intent</h2>
+            <p>Planner output</p>
+          </div>
+          <pre id="parsed-intent" class="code-block">{}</pre>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Retrieved Knowledge</h2>
+            <p>Graph-backed capability context</p>
+          </div>
+          <pre id="retrieved-knowledge" class="code-block">{}</pre>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Agent Trace</h2>
+            <p>Multi-agent workflow and beam search trace</p>
+          </div>
+          <pre id="agent-trace" class="code-block">[]</pre>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Git Status</h2>
+            <p>Repository context and version state</p>
+          </div>
+          <pre id="git-status" class="code-block">{}</pre>
+        </section>
+
+        <section class="panel panel-wide">
+          <div class="panel-heading">
+            <h2>Candidate Comparison</h2>
+            <p>Generated code, metrics, and selection</p>
+          </div>
+          <div id="candidate-container" class="candidate-grid"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Repair History</h2>
+            <p>Automatic fix attempts</p>
+          </div>
+          <pre id="repair-history" class="code-block">[]</pre>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Knowledge Graph View</h2>
+            <p>Visual layout generated from the exported graph</p>
+          </div>
+          <svg id="graph-view" class="graph-view" viewBox="0 0 520 320" preserveAspectRatio="xMidYMid meet"></svg>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Knowledge Graph Snapshot</h2>
+            <p>Current exported graph payload</p>
+          </div>
+          <pre id="graph-snapshot" class="code-block">{}</pre>
+        </section>
+      </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

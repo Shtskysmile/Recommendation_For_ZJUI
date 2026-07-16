@@ -1,0 +1,385 @@
+{
+  "task_id": "sample-topk-movielens",
+  "status": "completed",
+  "request": {
+    "task_name": "movie_homepage",
+    "capability_description": "Build a Top-K movie recommendation workflow for a homepage feed. Use implicit feedback, prioritize recall and ndcg, and keep it runnable on local cpu.",
+    "top_k": 5,
+    "constraints": [
+      "implicit feedback",
+      "local cpu"
+    ],
+    "candidate_count": 3
+  },
+  "parsed_intent": {
+    "task_name": "movie_homepage",
+    "objective": "Build a Top-K movie recommendation workflow for a homepage feed. Use implicit feedback, prioritize recall and ndcg, and keep it runnable on local cpu.",
+    "task_type": "top_k_recommendation",
+    "top_k": 5,
+    "constraints": [
+      "implicit feedback",
+      "local cpu"
+    ],
+    "success_metrics": [
+      "recall@k",
+      "ndcg@k",
+      "coverage"
+    ],
+    "preferred_algorithms": [
+      "itemcf",
+      "popularity"
+    ],
+    "data_profile": "movielens implicit feedback"
+  },
+  "retrieved_knowledge": {
+    "capabilities": [
+      {
+        "node_id": "capability::topk_recommendation",
+        "node_type": "Capability",
+        "name": "Top-K Recommendation Replication",
+        "description": "Replicate a Top-K recommendation workflow for implicit-feedback movie ranking tasks.",
+        "keywords": [
+          "recommendation",
+          "top-k",
+          "ranking",
+          "implicit",
+          "feedback",
+          "recall",
+          "ndcg",
+          "coverage",
+          "movielens"
+        ]
+      }
+    ],
+    "algorithms": [
+      {
+        "node_id": "algorithm::itemcf",
+        "node_type": "Algorithm",
+        "name": "Item-Based Collaborative Filtering",
+        "description": "Recommend unseen items using item-item similarity from user co-occurrence.",
+        "keywords": [
+          "collaborative",
+          "filtering",
+          "co-occurrence",
+          "implicit",
+          "feedback",
+          "recall",
+          "ndcg",
+          "top-k"
+        ]
+      },
+      {
+        "node_id": "algorithm::genre_affinity",
+        "node_type": "Algorithm",
+        "name": "Genre Affinity Recommender",
+        "description": "Recommend unseen items by matching user interaction genres with candidate item genres.",
+        "keywords": [
+          "content",
+          "based",
+          "genre",
+          "explainable",
+          "cold",
+          "start",
+          "local",
+          "cpu",
+          "top-k"
+        ]
+      },
+      {
+        "node_id": "algorithm::popularity",
+        "node_type": "Algorithm",
+        "name": "Popularity Baseline",
+        "description": "Global item popularity ranking filtered by user history.",
+        "keywords": [
+          "baseline",
+          "cold",
+          "start",
+          "explainable",
+          "local",
+          "cpu"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "node_id": "metric::ndcg_at_k",
+        "node_type": "Metric",
+        "name": "NDCG@K",
+        "description": "Position-sensitive ranking quality for Top-K recommendation.",
+        "keywords": []
+      },
+      {
+        "node_id": "metric::recall_at_k",
+        "node_type": "Metric",
+        "name": "Recall@K",
+        "description": "Fraction of held-out relevant items found in the Top-K list.",
+        "keywords": []
+      },
+      {
+        "node_id": "metric::coverage",
+        "node_type": "Metric",
+        "name": "Coverage",
+        "description": "Unique recommended items divided by unique catalog items.",
+        "keywords": []
+      }
+    ],
+    "constraints": [
+      {
+        "node_id": "constraint::implicit_feedback",
+        "node_type": "Constraint",
+        "name": "Implicit Feedback Only",
+        "description": "Training data is reduced to positive interactions.",
+        "keywords": []
+      },
+      {
+        "node_id": "constraint::local_cpu",
+        "node_type": "Constraint",
+        "name": "Local CPU Execution",
+        "description": "Algorithm must run on local CPU without external services.",
+        "keywords": []
+      }
+    ],
+    "failure_patterns": [
+      {
+        "node_id": "failure::seen_items",
+        "node_type": "FailurePattern",
+        "name": "Seen Item Leakage",
+        "description": "Recommended list contains items already observed in training history.",
+        "keywords": []
+      },
+      {
+        "node_id": "failure::empty_list",
+        "node_type": "FailurePattern",
+        "name": "Empty Recommendation List",
+        "description": "Candidate fails to emit Top-K items for one or more users.",
+        "keywords": []
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "candidate_id": "itemcf-1",
+      "algorithm_key": "itemcf",
+      "display_name": "Item-Based Collaborative Filtering",
+      "rationale": "Better aligned with Top-K recommendation quality metrics such as Recall@K and NDCG@K.",
+      "plan_summary": "Score candidate items by similarity to each user's interacted items.",
+      "code_path": "/Users/shtsky/PycharmProjects/ZJUI/generated/sample-topk-movielens/itemcf-1.py",
+      "source_code": "from __future__ import annotations\n\nfrom math import sqrt\n\nimport pandas as pd\n\nTASK_ID = \"sample-topk-movielens\"\nOBJECTIVE = 'Build a Top-K movie recommendation workflow for a homepage feed. Use implicit feedback, prioritize recall and ndcg, and keep it runnable on local cpu.'\n\n\nclass GeneratedRecommender:\n    algorithm_key = \"itemcf\"\n    algorithm_name = \"Item-Based Collaborative Filtering\"\n\n    def __init__(self) -> None:\n        self.user_history = {}\n        self.item_users = {}\n        self.item_similarity = {}\n        self.popularity = []\n\n    def fit(self, train_df: pd.DataFrame):\n        grouped = train_df.groupby(\"user_id\")[\"item_id\"].apply(list)\n        self.user_history = {\n            int(user_id): [int(item_id) for item_id in items]\n            for user_id, items in grouped.items()\n        }\n        counts = train_df.groupby(\"item_id\").size().sort_values(ascending=False)\n        self.popularity = [int(item_id) for item_id in counts.index.tolist()]\n        item_groups = train_df.groupby(\"item_id\")[\"user_id\"].apply(list)\n        self.item_users = {\n            int(item_id): set(int(user_id) for user_id in users)\n            for item_id, users in item_groups.items()\n        }\n        self.item_similarity = {item_id: {} for item_id in self.item_users}\n\n        item_ids = sorted(self.item_users)\n        for index, left_item in enumerate(item_ids):\n            left_users = self.item_users[left_item]\n            for right_item in item_ids[index + 1:]:\n                right_users = self.item_users[right_item]\n                overlap = len(left_users & right_users)\n                if overlap == 0:\n                    continue\n                similarity = overlap / sqrt(len(left_users) * len(right_users))\n                self.item_similarity[left_item][right_item] = similarity\n                self.item_similarity[right_item][left_item] = similarity\n        return self\n\n    def recommend(self, user_id: int, k: int = 5) -> list[int]:\n        seen = set(self.user_history.get(int(user_id), []))\n        scores = {}\n        for seen_item in seen:\n            for candidate_item, similarity in self.item_similarity.get(seen_item, {}).items():\n                if candidate_item in seen:\n                    continue\n                scores[candidate_item] = scores.get(candidate_item, 0.0) + similarity\n\n        ranked = [\n            item_id\n            for item_id, _score in sorted(scores.items(), key=lambda pair: (-pair[1], pair[0]))\n        ]\n        for item_id in self.popularity:\n            if item_id not in seen and item_id not in ranked:\n                ranked.append(item_id)\n        return ranked[:k]\n\n    def batch_recommend(self, user_ids: list[int], k: int = 5) -> dict[int, list[int]]:\n        return {int(user_id): self.recommend(int(user_id), k=k) for user_id in user_ids}\n",
+      "validation": {
+        "candidate_id": "itemcf-1",
+        "algorithm_key": "itemcf",
+        "success": true,
+        "interface_ok": true,
+        "stability_ok": true,
+        "code_path": "/Users/shtsky/PycharmProjects/ZJUI/generated/sample-topk-movielens/itemcf-1.py",
+        "score": 1.0,
+        "metrics": {
+          "recall_at_k": 1.0,
+          "ndcg_at_k": 1.0,
+          "coverage": 1.0,
+          "average_latency_ms": 0.009472,
+          "peak_allocated_kb": 1.703125
+        },
+        "errors": [],
+        "warnings": []
+      },
+      "repair_attempts": 0
+    },
+    {
+      "candidate_id": "popularity-2",
+      "algorithm_key": "popularity",
+      "display_name": "Popularity Baseline",
+      "rationale": "Good for cold-start fallback, coverage checks, and interface validation.",
+      "plan_summary": "Use global item frequency as a strong local baseline with clear behavior.",
+      "code_path": "/Users/shtsky/PycharmProjects/ZJUI/generated/sample-topk-movielens/popularity-2.py",
+      "source_code": "from __future__ import annotations\n\nimport pandas as pd\n\nTASK_ID = \"sample-topk-movielens\"\nOBJECTIVE = 'Build a Top-K movie recommendation workflow for a homepage feed. Use implicit feedback, prioritize recall and ndcg, and keep it runnable on local cpu.'\n\n\nclass GeneratedRecommender:\n    algorithm_key = \"popularity\"\n    algorithm_name = \"Popularity Baseline\"\n\n    def __init__(self) -> None:\n        self.user_history = {}\n        self.ranked_items = []\n\n    def fit(self, train_df: pd.DataFrame):\n        grouped = train_df.groupby(\"user_id\")[\"item_id\"].apply(list)\n        self.user_history = {\n            int(user_id): [int(item_id) for item_id in items]\n            for user_id, items in grouped.items()\n        }\n        counts = train_df.groupby(\"item_id\").size().sort_values(ascending=False)\n        self.ranked_items = [int(item_id) for item_id in counts.index.tolist()]\n        return self\n\n    def recommend(self, user_id: int, k: int = 5) -> list[int]:\n        seen = set(self.user_history.get(int(user_id), []))\n        recommendations = []\n        for item_id in self.ranked_items:\n            if item_id in seen:\n                continue\n            recommendations.append(item_id)\n            if len(recommendations) >= k:\n                break\n        return recommendations\n\n    def batch_recommend(self, user_ids: list[int], k: int = 5) -> dict[int, list[int]]:\n        return {int(user_id): self.recommend(int(user_id), k=k) for user_id in user_ids}\n",
+      "validation": {
+        "candidate_id": "popularity-2",
+        "algorithm_key": "popularity",
+        "success": true,
+        "interface_ok": true,
+        "stability_ok": true,
+        "code_path": "/Users/shtsky/PycharmProjects/ZJUI/generated/sample-topk-movielens/popularity-2.py",
+        "score": 0.301667,
+        "metrics": {
+          "recall_at_k": 0.333333,
+          "ndcg_at_k": 0.166667,
+          "coverage": 0.6,
+          "average_latency_ms": 0.001573,
+          "peak_allocated_kb": 1.617188
+        },
+        "errors": [],
+        "warnings": []
+      },
+      "repair_attempts": 0
+    },
+    {
+      "candidate_id": "genre_affinity-3",
+      "algorithm_key": "genre_affinity",
+      "display_name": "Genre Affinity Recommender",
+      "rationale": "Adds a content-oriented candidate that is easy to explain and transfers better to sparse histories.",
+      "plan_summary": "Estimate user preference from interaction genres and rank unseen items by genre affinity.",
+      "code_path": "/Users/shtsky/PycharmProjects/ZJUI/generated/sample-topk-movielens/genre_affinity-3.py",
+      "source_code": "from __future__ import annotations\n\nfrom collections import Counter\n\nimport pandas as pd\n\nTASK_ID = \"sample-topk-movielens\"\nOBJECTIVE = 'Build a Top-K movie recommendation workflow for a homepage feed. Use implicit feedback, prioritize recall and ndcg, and keep it runnable on local cpu.'\n\n\nclass GeneratedRecommender:\n    algorithm_key = \"genre_affinity\"\n    algorithm_name = \"Genre Affinity Recommender\"\n\n    def __init__(self) -> None:\n        self.user_history = {}\n        self.user_genre_scores = {}\n        self.item_metadata = {}\n        self.popularity = []\n\n    def fit(self, train_df: pd.DataFrame):\n        grouped = train_df.groupby(\"user_id\")[\"item_id\"].apply(list)\n        self.user_history = {\n            int(user_id): [int(item_id) for item_id in items]\n            for user_id, items in grouped.items()\n        }\n        counts = train_df.groupby(\"item_id\").size().sort_values(ascending=False)\n        self.popularity = [int(item_id) for item_id in counts.index.tolist()]\n        self.item_metadata = {\n            int(row.item_id): str(row.genres).split(\"|\")\n            for row in train_df.drop_duplicates(\"item_id\").itertuples(index=False)\n        }\n\n        self.user_genre_scores = {}\n        for user_id, frame in train_df.groupby(\"user_id\"):\n            counter = Counter()\n            for genres in frame[\"genres\"].tolist():\n                for genre in str(genres).split(\"|\"):\n                    counter[genre] += 1\n            self.user_genre_scores[int(user_id)] = counter\n        return self\n\n    def recommend(self, user_id: int, k: int = 5) -> list[int]:\n        user_id = int(user_id)\n        seen = set(self.user_history.get(user_id, []))\n        genre_scores = self.user_genre_scores.get(user_id, Counter())\n        ranked_pairs = []\n\n        for item_id, genres in self.item_metadata.items():\n            if item_id in seen:\n                continue\n            score = sum(genre_scores.get(genre, 0) for genre in genres)\n            if score > 0:\n                ranked_pairs.append((item_id, float(score)))\n\n        ranked = [\n            item_id\n            for item_id, _score in sorted(ranked_pairs, key=lambda pair: (-pair[1], pair[0]))\n        ]\n        for item_id in self.popularity:\n            if item_id not in seen and item_id not in ranked:\n                ranked.append(item_id)\n        return ranked[:k]\n\n    def batch_recommend(self, user_ids: list[int], k: int = 5) -> dict[int, list[int]]:\n        return {int(user_id): self.recommend(int(user_id), k=k) for user_id in user_ids}\n",
+      "validation": {
+        "candidate_id": "genre_affinity-3",
+        "algorithm_key": "genre_affinity",
+        "success": true,
+        "interface_ok": true,
+        "stability_ok": true,
+        "code_path": "/Users/shtsky/PycharmProjects/ZJUI/generated/sample-topk-movielens/genre_affinity-3.py",
+        "score": 0.985417,
+        "metrics": {
+          "recall_at_k": 1.0,
+          "ndcg_at_k": 0.958333,
+          "coverage": 1.0,
+          "average_latency_ms": 0.018517,
+          "peak_allocated_kb": 1.820312
+        },
+        "errors": [],
+        "warnings": []
+      },
+      "repair_attempts": 0
+    }
+  ],
+  "best_candidate": {
+    "candidate_id": "itemcf-1",
+    "algorithm_key": "itemcf",
+    "display_name": "Item-Based Collaborative Filtering",
+    "rationale": "Better aligned with Top-K recommendation quality metrics such as Recall@K and NDCG@K.",
+    "plan_summary": "Score candidate items by similarity to each user's interacted items.",
+    "code_path": "/Users/shtsky/PycharmProjects/ZJUI/generated/sample-topk-movielens/itemcf-1.py",
+    "source_code": "from __future__ import annotations\n\nfrom math import sqrt\n\nimport pandas as pd\n\nTASK_ID = \"sample-topk-movielens\"\nOBJECTIVE = 'Build a Top-K movie recommendation workflow for a homepage feed. Use implicit feedback, prioritize recall and ndcg, and keep it runnable on local cpu.'\n\n\nclass GeneratedRecommender:\n    algorithm_key = \"itemcf\"\n    algorithm_name = \"Item-Based Collaborative Filtering\"\n\n    def __init__(self) -> None:\n        self.user_history = {}\n        self.item_users = {}\n        self.item_similarity = {}\n        self.popularity = []\n\n    def fit(self, train_df: pd.DataFrame):\n        grouped = train_df.groupby(\"user_id\")[\"item_id\"].apply(list)\n        self.user_history = {\n            int(user_id): [int(item_id) for item_id in items]\n            for user_id, items in grouped.items()\n        }\n        counts = train_df.groupby(\"item_id\").size().sort_values(ascending=False)\n        self.popularity = [int(item_id) for item_id in counts.index.tolist()]\n        item_groups = train_df.groupby(\"item_id\")[\"user_id\"].apply(list)\n        self.item_users = {\n            int(item_id): set(int(user_id) for user_id in users)\n            for item_id, users in item_groups.items()\n        }\n        self.item_similarity = {item_id: {} for item_id in self.item_users}\n\n        item_ids = sorted(self.item_users)\n        for index, left_item in enumerate(item_ids):\n            left_users = self.item_users[left_item]\n            for right_item in item_ids[index + 1:]:\n                right_users = self.item_users[right_item]\n                overlap = len(left_users & right_users)\n                if overlap == 0:\n                    continue\n                similarity = overlap / sqrt(len(left_users) * len(right_users))\n                self.item_similarity[left_item][right_item] = similarity\n                self.item_similarity[right_item][left_item] = similarity\n        return self\n\n    def recommend(self, user_id: int, k: int = 5) -> list[int]:\n        seen = set(self.user_history.get(int(user_id), []))\n        scores = {}\n        for seen_item in seen:\n            for candidate_item, similarity in self.item_similarity.get(seen_item, {}).items():\n                if candidate_item in seen:\n                    continue\n                scores[candidate_item] = scores.get(candidate_item, 0.0) + similarity\n\n        ranked = [\n            item_id\n            for item_id, _score in sorted(scores.items(), key=lambda pair: (-pair[1], pair[0]))\n        ]\n        for item_id in self.popularity:\n            if item_id not in seen and item_id not in ranked:\n                ranked.append(item_id)\n        return ranked[:k]\n\n    def batch_recommend(self, user_ids: list[int], k: int = 5) -> dict[int, list[int]]:\n        return {int(user_id): self.recommend(int(user_id), k=k) for user_id in user_ids}\n",
+    "validation": {
+      "candidate_id": "itemcf-1",
+      "algorithm_key": "itemcf",
+      "success": true,
+      "interface_ok": true,
+      "stability_ok": true,
+      "code_path": "/Users/shtsky/PycharmProjects/ZJUI/generated/sample-topk-movielens/itemcf-1.py",
+      "score": 1.0,
+      "metrics": {
+        "recall_at_k": 1.0,
+        "ndcg_at_k": 1.0,
+        "coverage": 1.0,
+        "average_latency_ms": 0.009472,
+        "peak_allocated_kb": 1.703125
+      },
+      "errors": [],
+      "warnings": []
+    },
+    "repair_attempts": 0
+  },
+  "validation_summary": {
+    "successful_candidates": 3,
+    "failed_candidates": 0,
+    "best_score": 1.0,
+    "ranking": [
+      "itemcf-1",
+      "genre_affinity-3",
+      "popularity-2"
+    ]
+  },
+  "repair_history": [],
+  "agent_trace": [
+    {
+      "agent": "IntentParser",
+      "summary": "Parsed natural-language capability into a structured recommendation spec.",
+      "score": 0.0,
+      "state": {
+        "task_name": "movie_homepage",
+        "task_type": "top_k_recommendation"
+      }
+    },
+    {
+      "agent": "KnowledgeRetriever",
+      "summary": "Retrieved graph-backed capability knowledge and failure patterns.",
+      "score": 3.0,
+      "state": {
+        "algorithms": [
+          "algorithm::itemcf",
+          "algorithm::genre_affinity",
+          "algorithm::popularity"
+        ],
+        "metrics": [
+          "metric::ndcg_at_k",
+          "metric::recall_at_k",
+          "metric::coverage"
+        ]
+      }
+    },
+    {
+      "agent": "BeamSearchPlanner",
+      "summary": "Expanded beam at depth 1",
+      "score": 24.5,
+      "state": {
+        "depth": 1,
+        "beam_width": 3,
+        "best_sequence": [
+          "itemcf"
+        ]
+      }
+    },
+    {
+      "agent": "BeamSearchPlanner",
+      "summary": "Expanded beam at depth 2",
+      "score": 38.2,
+      "state": {
+        "depth": 2,
+        "beam_width": 3,
+        "best_sequence": [
+          "itemcf",
+          "popularity"
+        ]
+      }
+    },
+    {
+      "agent": "BeamSearchPlanner",
+      "summary": "Expanded beam at depth 3",
+      "score": 41.9,
+      "state": {
+        "depth": 3,
+        "beam_width": 3,
+        "best_sequence": [
+          "genre_affinity",
+          "itemcf",
+          "popularity"
+        ]
+      }
+    }
+  ],
+  "report_paths": {
+    "json": "/Users/shtsky/PycharmProjects/ZJUI/reports/tasks/sample-topk-movielens.json",
+    "markdown": "/Users/shtsky/PycharmProjects/ZJUI/reports/tasks/sample-topk-movielens.md"
+  },
+  "knowledge_writeback_id": "validation::sample-topk-movielens",
+  "provider_name": "mock",
+  "git_context": {
+    "is_git_repo": true,
+    "branch": "main",
+    "head_commit": null,
+    "is_dirty": true,
+    "staged_files": [],
+    "unstaged_files": [],
+    "untracked_files": [
+      ".env.example",
+      ".gitignore",
+      "Dockerfile",
+      "README.md",
+      "app/",
+      "data/",
+      "docs/",
+      "examples/",
+      "generated/",
+      "knowledge/",
+      "pytest.ini",
+      "reports/",
+      "requirements.txt",
+      "tests/"
+    ]
+  },
+  "capability_version": "draft-sample-topk-movielens",
+  "error_message": null,
+  "created_at": "2026-07-16T12:35:59+00:00",
+  "updated_at": "2026-07-16T12:35:59+00:00"
+}

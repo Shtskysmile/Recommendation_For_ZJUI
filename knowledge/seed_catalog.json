@@ -1,0 +1,196 @@
+{
+  "nodes": [
+    {
+      "id": "capability::topk_recommendation",
+      "type": "Capability",
+      "name": "Top-K Recommendation Replication",
+      "description": "Replicate a Top-K recommendation workflow for implicit-feedback movie ranking tasks.",
+      "keywords": "recommendation top-k ranking implicit feedback recall ndcg coverage movielens"
+    },
+    {
+      "id": "task::movie_homepage",
+      "type": "TaskType",
+      "name": "Movie Homepage Recommendation",
+      "description": "Homepage or browse-page recommendation for movie platforms."
+    },
+    {
+      "id": "algorithm::popularity",
+      "type": "Algorithm",
+      "name": "Popularity Baseline",
+      "description": "Global item popularity ranking filtered by user history.",
+      "keywords": "baseline cold start explainable local cpu"
+    },
+    {
+      "id": "algorithm::itemcf",
+      "type": "Algorithm",
+      "name": "Item-Based Collaborative Filtering",
+      "description": "Recommend unseen items using item-item similarity from user co-occurrence.",
+      "keywords": "collaborative filtering co-occurrence implicit feedback recall ndcg top-k"
+    },
+    {
+      "id": "algorithm::genre_affinity",
+      "type": "Algorithm",
+      "name": "Genre Affinity Recommender",
+      "description": "Recommend unseen items by matching user interaction genres with candidate item genres.",
+      "keywords": "content based genre explainable cold start local cpu top-k"
+    },
+    {
+      "id": "metric::recall_at_k",
+      "type": "Metric",
+      "name": "Recall@K",
+      "description": "Fraction of held-out relevant items found in the Top-K list."
+    },
+    {
+      "id": "metric::ndcg_at_k",
+      "type": "Metric",
+      "name": "NDCG@K",
+      "description": "Position-sensitive ranking quality for Top-K recommendation."
+    },
+    {
+      "id": "metric::coverage",
+      "type": "Metric",
+      "name": "Coverage",
+      "description": "Unique recommended items divided by unique catalog items."
+    },
+    {
+      "id": "constraint::implicit_feedback",
+      "type": "Constraint",
+      "name": "Implicit Feedback Only",
+      "description": "Training data is reduced to positive interactions."
+    },
+    {
+      "id": "constraint::local_cpu",
+      "type": "Constraint",
+      "name": "Local CPU Execution",
+      "description": "Algorithm must run on local CPU without external services."
+    },
+    {
+      "id": "template::popularity_py",
+      "type": "CodeTemplate",
+      "name": "Popularity Python Template",
+      "description": "Template for the popularity baseline."
+    },
+    {
+      "id": "template::itemcf_py",
+      "type": "CodeTemplate",
+      "name": "ItemCF Python Template",
+      "description": "Template for the item-based collaborative filtering baseline."
+    },
+    {
+      "id": "template::genre_affinity_py",
+      "type": "CodeTemplate",
+      "name": "Genre Affinity Python Template",
+      "description": "Template for the genre affinity recommender."
+    },
+    {
+      "id": "failure::seen_items",
+      "type": "FailurePattern",
+      "name": "Seen Item Leakage",
+      "description": "Recommended list contains items already observed in training history."
+    },
+    {
+      "id": "failure::empty_list",
+      "type": "FailurePattern",
+      "name": "Empty Recommendation List",
+      "description": "Candidate fails to emit Top-K items for one or more users."
+    },
+    {
+      "id": "failure::unsafe_code",
+      "type": "FailurePattern",
+      "name": "Unsafe Code Pattern",
+      "description": "Generated candidate imports or executes unsafe modules or functions."
+    }
+  ],
+  "edges": [
+    {
+      "source": "capability::topk_recommendation",
+      "target": "task::movie_homepage",
+      "type": "supports"
+    },
+    {
+      "source": "capability::topk_recommendation",
+      "target": "algorithm::popularity",
+      "type": "uses"
+    },
+    {
+      "source": "capability::topk_recommendation",
+      "target": "algorithm::itemcf",
+      "type": "uses"
+    },
+    {
+      "source": "capability::topk_recommendation",
+      "target": "algorithm::genre_affinity",
+      "type": "uses"
+    },
+    {
+      "source": "algorithm::popularity",
+      "target": "metric::coverage",
+      "type": "evaluated_by"
+    },
+    {
+      "source": "algorithm::itemcf",
+      "target": "metric::recall_at_k",
+      "type": "evaluated_by"
+    },
+    {
+      "source": "algorithm::itemcf",
+      "target": "metric::ndcg_at_k",
+      "type": "evaluated_by"
+    },
+    {
+      "source": "algorithm::genre_affinity",
+      "target": "metric::coverage",
+      "type": "evaluated_by"
+    },
+    {
+      "source": "algorithm::popularity",
+      "target": "constraint::local_cpu",
+      "type": "fits"
+    },
+    {
+      "source": "algorithm::itemcf",
+      "target": "constraint::implicit_feedback",
+      "type": "fits"
+    },
+    {
+      "source": "algorithm::genre_affinity",
+      "target": "constraint::local_cpu",
+      "type": "fits"
+    },
+    {
+      "source": "algorithm::popularity",
+      "target": "template::popularity_py",
+      "type": "implemented_by"
+    },
+    {
+      "source": "algorithm::itemcf",
+      "target": "template::itemcf_py",
+      "type": "implemented_by"
+    },
+    {
+      "source": "algorithm::genre_affinity",
+      "target": "template::genre_affinity_py",
+      "type": "implemented_by"
+    },
+    {
+      "source": "failure::seen_items",
+      "target": "algorithm::popularity",
+      "type": "suggests_fix"
+    },
+    {
+      "source": "failure::empty_list",
+      "target": "algorithm::itemcf",
+      "type": "suggests_fix"
+    },
+    {
+      "source": "failure::seen_items",
+      "target": "algorithm::genre_affinity",
+      "type": "suggests_fix"
+    },
+    {
+      "source": "failure::unsafe_code",
+      "target": "template::itemcf_py",
+      "type": "suggests_fix"
+    }
+  ]
+}

@@ -1,0 +1,831 @@
+{
+  "repo_name": "ZJUI",
+  "repo_path": "/Users/shtsky/PycharmProjects/ZJUI",
+  "readme_excerpt": "# AI Capability Factory for Recommendation Workflows\n\nThis repository implements a recommendation-oriented `AI Agent` capability factory prototype for the assignment in [docs/requirements.pdf](docs/requirements.pdf). It converts a natural-language recommendation capability into runnable code, validates the result, compares multiple candidates, writes the outcome back into a knowledge graph, and now also supports `Beam Search`, `real repository extraction`, `Git-aware version management`, and a `",
+  "dependencies": [
+    "fastapi",
+    "httpx",
+    "jinja2",
+    "networkx",
+    "numpy",
+    "pandas",
+    "pydantic",
+    "pytest",
+    "pytest-cov",
+    "uvicorn"
+  ],
+  "python_file_count": 34,
+  "files": [
+    {
+      "path": "app/__init__.py",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "app/algorithm_registry.py",
+      "imports": [
+        "__future__",
+        "dataclasses"
+      ],
+      "symbols": [
+        {
+          "name": "AlgorithmDescriptor",
+          "symbol_type": "class",
+          "line_no": 7,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/cli.py",
+      "imports": [
+        "__future__",
+        "app.models",
+        "app.repo_mining",
+        "app.settings",
+        "app.workflow",
+        "argparse",
+        "json",
+        "pathlib",
+        "uvicorn"
+      ],
+      "symbols": [
+        {
+          "name": "build_parser",
+          "symbol_type": "function",
+          "line_no": 15,
+          "docstring": ""
+        },
+        {
+          "name": "main",
+          "symbol_type": "function",
+          "line_no": 42,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/codegen.py",
+      "imports": [
+        "__future__",
+        "app.algorithm_registry",
+        "app.models",
+        "app.settings"
+      ],
+      "symbols": [
+        {
+          "name": "CandidateGenerator",
+          "symbol_type": "class",
+          "line_no": 8,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/data.py",
+      "imports": [
+        "__future__",
+        "dataclasses",
+        "pandas",
+        "pathlib"
+      ],
+      "symbols": [
+        {
+          "name": "RecommendationDataset",
+          "symbol_type": "class",
+          "line_no": 10,
+          "docstring": ""
+        },
+        {
+          "name": "MovieLensDatasetLoader",
+          "symbol_type": "class",
+          "line_no": 24,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/env.py",
+      "imports": [
+        "__future__",
+        "os",
+        "pathlib"
+      ],
+      "symbols": [
+        {
+          "name": "load_env_file",
+          "symbol_type": "function",
+          "line_no": 7,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/gitops.py",
+      "imports": [
+        "__future__",
+        "app.models",
+        "pathlib",
+        "subprocess"
+      ],
+      "symbols": [
+        {
+          "name": "GitRepositoryManager",
+          "symbol_type": "class",
+          "line_no": 9,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/knowledge.py",
+      "imports": [
+        "__future__",
+        "app.models",
+        "json",
+        "networkx",
+        "pathlib",
+        "re",
+        "typing"
+      ],
+      "symbols": [
+        {
+          "name": "_tokenize",
+          "symbol_type": "function",
+          "line_no": 20,
+          "docstring": ""
+        },
+        {
+          "name": "KnowledgeGraphStore",
+          "symbol_type": "class",
+          "line_no": 24,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/llm.py",
+      "imports": [
+        "__future__",
+        "abc",
+        "app.algorithm_registry",
+        "app.models",
+        "app.settings",
+        "httpx",
+        "json"
+      ],
+      "symbols": [
+        {
+          "name": "_stringify_data_profile",
+          "symbol_type": "function",
+          "line_no": 13,
+          "docstring": ""
+        },
+        {
+          "name": "_normalize_algorithm_key",
+          "symbol_type": "function",
+          "line_no": 32,
+          "docstring": ""
+        },
+        {
+          "name": "_normalize_capability_payload",
+          "symbol_type": "function",
+          "line_no": 39,
+          "docstring": ""
+        },
+        {
+          "name": "_normalize_candidate_plan",
+          "symbol_type": "function",
+          "line_no": 55,
+          "docstring": ""
+        },
+        {
+          "name": "LLMProvider",
+          "symbol_type": "class",
+          "line_no": 71,
+          "docstring": ""
+        },
+        {
+          "name": "MockLLMProvider",
+          "symbol_type": "class",
+          "line_no": 89,
+          "docstring": ""
+        },
+        {
+          "name": "OpenAICompatibleLLMProvider",
+          "symbol_type": "class",
+          "line_no": 130,
+          "docstring": ""
+        },
+        {
+          "name": "create_provider",
+          "symbol_type": "function",
+          "line_no": 226,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/main.py",
+      "imports": [
+        "__future__",
+        "app.models",
+        "app.repo_mining",
+        "app.settings",
+        "app.tasks",
+        "app.workflow",
+        "fastapi",
+        "fastapi.responses",
+        "fastapi.staticfiles",
+        "fastapi.templating",
+        "pathlib"
+      ],
+      "symbols": [
+        {
+          "name": "create_app",
+          "symbol_type": "function",
+          "line_no": 17,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/models.py",
+      "imports": [
+        "__future__",
+        "datetime",
+        "pydantic"
+      ],
+      "symbols": [
+        {
+          "name": "utc_now_iso",
+          "symbol_type": "function",
+          "line_no": 8,
+          "docstring": ""
+        },
+        {
+          "name": "GenerationRequest",
+          "symbol_type": "class",
+          "line_no": 12,
+          "docstring": ""
+        },
+        {
+          "name": "RepoIngestionRequest",
+          "symbol_type": "class",
+          "line_no": 20,
+          "docstring": ""
+        },
+        {
+          "name": "GitSnapshotRequest",
+          "symbol_type": "class",
+          "line_no": 24,
+          "docstring": ""
+        },
+        {
+          "name": "CapabilitySpec",
+          "symbol_type": "class",
+          "line_no": 28,
+          "docstring": ""
+        },
+        {
+          "name": "KnowledgeNode",
+          "symbol_type": "class",
+          "line_no": 39,
+          "docstring": ""
+        },
+        {
+          "name": "RetrievedKnowledge",
+          "symbol_type": "class",
+          "line_no": 47,
+          "docstring": ""
+        },
+        {
+          "name": "CandidatePlan",
+          "symbol_type": "class",
+          "line_no": 55,
+          "docstring": ""
+        },
+        {
+          "name": "SearchTraceStep",
+          "symbol_type": "class",
+          "line_no": 64,
+          "docstring": ""
+        },
+        {
+          "name": "ValidationMetrics",
+          "symbol_type": "class",
+          "line_no": 71,
+          "docstring": ""
+        },
+        {
+          "name": "ValidationReport",
+          "symbol_type": "class",
+          "line_no": 79,
+          "docstring": ""
+        },
+        {
+          "name": "AlgorithmCandidate",
+          "symbol_type": "class",
+          "line_no": 92,
+          "docstring": ""
+        },
+        {
+          "name": "RepairRecord",
+          "symbol_type": "class",
+          "line_no": 104,
+          "docstring": ""
+        },
+        {
+          "name": "ValidationSummary",
+          "symbol_type": "class",
+          "line_no": 113,
+          "docstring": ""
+        },
+        {
+          "name": "GitStatus",
+          "symbol_type": "class",
+          "line_no": 120,
+          "docstring": ""
+        },
+        {
+          "name": "RepoSymbol",
+          "symbol_type": "class",
+          "line_no": 130,
+          "docstring": ""
+        },
+        {
+          "name": "RepoFileRecord",
+          "symbol_type": "class",
+          "line_no": 137,
+          "docstring": ""
+        },
+        {
+          "name": "RepoExtractionResult",
+          "symbol_type": "class",
+          "line_no": 143,
+          "docstring": ""
+        },
+        {
+          "name": "KnowledgeWriteback",
+          "symbol_type": "class",
+          "line_no": 153,
+          "docstring": ""
+        },
+        {
+          "name": "TaskRecord",
+          "symbol_type": "class",
+          "line_no": 159,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/repair.py",
+      "imports": [
+        "__future__",
+        "app.codegen",
+        "app.models",
+        "app.settings"
+      ],
+      "symbols": [
+        {
+          "name": "RepairAgent",
+          "symbol_type": "class",
+          "line_no": 8,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/repo_mining.py",
+      "imports": [
+        "__future__",
+        "app.models",
+        "ast",
+        "json",
+        "pathlib",
+        "re"
+      ],
+      "symbols": [
+        {
+          "name": "RepoKnowledgeExtractor",
+          "symbol_type": "class",
+          "line_no": 14,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/reporting.py",
+      "imports": [
+        "__future__",
+        "app.models",
+        "app.settings",
+        "json",
+        "pathlib"
+      ],
+      "symbols": [
+        {
+          "name": "ReportWriter",
+          "symbol_type": "class",
+          "line_no": 10,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/search.py",
+      "imports": [
+        "__future__",
+        "app.algorithm_registry",
+        "app.models",
+        "dataclasses"
+      ],
+      "symbols": [
+        {
+          "name": "SearchResult",
+          "symbol_type": "class",
+          "line_no": 10,
+          "docstring": ""
+        },
+        {
+          "name": "BeamSearchPlanner",
+          "symbol_type": "class",
+          "line_no": 16,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/settings.py",
+      "imports": [
+        "__future__",
+        "app.env",
+        "dataclasses",
+        "os",
+        "pathlib"
+      ],
+      "symbols": [
+        {
+          "name": "AppSettings",
+          "symbol_type": "class",
+          "line_no": 11,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/tasks.py",
+      "imports": [
+        "__future__",
+        "app.models",
+        "app.workflow",
+        "concurrent.futures",
+        "threading"
+      ],
+      "symbols": [
+        {
+          "name": "TaskManager",
+          "symbol_type": "class",
+          "line_no": 10,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/validation.py",
+      "imports": [
+        "__future__",
+        "app.data",
+        "app.models",
+        "ast",
+        "importlib.util",
+        "math",
+        "pathlib",
+        "time",
+        "tracemalloc",
+        "uuid"
+      ],
+      "symbols": [
+        {
+          "name": "SafetyVisitor",
+          "symbol_type": "class",
+          "line_no": 20,
+          "docstring": ""
+        },
+        {
+          "name": "CandidateValidator",
+          "symbol_type": "class",
+          "line_no": 46,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "app/workflow.py",
+      "imports": [
+        "__future__",
+        "app.codegen",
+        "app.data",
+        "app.gitops",
+        "app.knowledge",
+        "app.llm",
+        "app.models",
+        "app.repair",
+        "app.reporting",
+        "app.search",
+        "app.settings",
+        "app.validation",
+        "datetime",
+        "uuid"
+      ],
+      "symbols": [
+        {
+          "name": "CapabilityFactoryService",
+          "symbol_type": "class",
+          "line_no": 28,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "generated/sample-topk-movielens/genre_affinity-3.py",
+      "imports": [
+        "__future__",
+        "collections",
+        "pandas"
+      ],
+      "symbols": [
+        {
+          "name": "GeneratedRecommender",
+          "symbol_type": "class",
+          "line_no": 11,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "generated/sample-topk-movielens/genre_affinity-3_repair_1.py",
+      "imports": [
+        "__future__",
+        "collections",
+        "pandas"
+      ],
+      "symbols": [
+        {
+          "name": "GeneratedRecommender",
+          "symbol_type": "class",
+          "line_no": 11,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "generated/sample-topk-movielens/genre_affinity-3_repair_2.py",
+      "imports": [
+        "__future__",
+        "collections",
+        "pandas"
+      ],
+      "symbols": [
+        {
+          "name": "GeneratedRecommender",
+          "symbol_type": "class",
+          "line_no": 11,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "generated/sample-topk-movielens/itemcf-1.py",
+      "imports": [
+        "__future__",
+        "math",
+        "pandas"
+      ],
+      "symbols": [
+        {
+          "name": "GeneratedRecommender",
+          "symbol_type": "class",
+          "line_no": 11,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "generated/sample-topk-movielens/popularity-2.py",
+      "imports": [
+        "__future__",
+        "pandas"
+      ],
+      "symbols": [
+        {
+          "name": "GeneratedRecommender",
+          "symbol_type": "class",
+          "line_no": 9,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "generated/siliconflow-smoke/itemcf-1.py",
+      "imports": [
+        "__future__",
+        "math",
+        "pandas"
+      ],
+      "symbols": [
+        {
+          "name": "GeneratedRecommender",
+          "symbol_type": "class",
+          "line_no": 11,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "tests/conftest.py",
+      "imports": [
+        "__future__",
+        "app.settings",
+        "pathlib",
+        "pytest",
+        "shutil"
+      ],
+      "symbols": [
+        {
+          "name": "test_settings",
+          "symbol_type": "function",
+          "line_no": 12,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "tests/test_api.py",
+      "imports": [
+        "app.main",
+        "fastapi.testclient",
+        "pathlib",
+        "time"
+      ],
+      "symbols": [
+        {
+          "name": "test_index_page_renders",
+          "symbol_type": "function",
+          "line_no": 9,
+          "docstring": ""
+        },
+        {
+          "name": "test_task_api_completes_and_exposes_graph",
+          "symbol_type": "function",
+          "line_no": 18,
+          "docstring": ""
+        },
+        {
+          "name": "test_repo_ingestion_api_extracts_repo_knowledge",
+          "symbol_type": "function",
+          "line_no": 61,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "tests/test_data.py",
+      "imports": [
+        "app.data"
+      ],
+      "symbols": [
+        {
+          "name": "test_loader_creates_train_test_split",
+          "symbol_type": "function",
+          "line_no": 4,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "tests/test_knowledge.py",
+      "imports": [
+        "app.knowledge",
+        "app.models",
+        "json"
+      ],
+      "symbols": [
+        {
+          "name": "test_retrieval_returns_recommender_algorithms",
+          "symbol_type": "function",
+          "line_no": 7,
+          "docstring": ""
+        },
+        {
+          "name": "test_writeback_persists_validation_result",
+          "symbol_type": "function",
+          "line_no": 27,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "tests/test_repo_mining.py",
+      "imports": [
+        "__future__",
+        "app.gitops",
+        "app.knowledge",
+        "app.repo_mining",
+        "json",
+        "pathlib",
+        "subprocess"
+      ],
+      "symbols": [
+        {
+          "name": "test_repo_extractor_collects_symbols_and_dependencies",
+          "symbol_type": "function",
+          "line_no": 11,
+          "docstring": ""
+        },
+        {
+          "name": "test_git_status_handles_initialized_repo",
+          "symbol_type": "function",
+          "line_no": 46,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "tests/test_search.py",
+      "imports": [
+        "__future__",
+        "app.knowledge",
+        "app.models",
+        "app.search"
+      ],
+      "symbols": [
+        {
+          "name": "test_beam_search_ranks_itemcf_first_for_recall_heavy_request",
+          "symbol_type": "function",
+          "line_no": 8,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "tests/test_settings.py",
+      "imports": [
+        "__future__",
+        "app.settings",
+        "pathlib"
+      ],
+      "symbols": [
+        {
+          "name": "test_settings_load_dotenv_file",
+          "symbol_type": "function",
+          "line_no": 8,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "tests/test_validation.py",
+      "imports": [
+        "app.codegen",
+        "app.data",
+        "app.models",
+        "app.repair",
+        "app.validation",
+        "pathlib"
+      ],
+      "symbols": [
+        {
+          "name": "test_validator_accepts_popularity_template",
+          "symbol_type": "function",
+          "line_no": 10,
+          "docstring": ""
+        },
+        {
+          "name": "test_repair_agent_recovers_missing_interface",
+          "symbol_type": "function",
+          "line_no": 38,
+          "docstring": ""
+        }
+      ]
+    },
+    {
+      "path": "tests/test_workflow.py",
+      "imports": [
+        "app.models",
+        "app.workflow",
+        "pathlib"
+      ],
+      "symbols": [
+        {
+          "name": "test_workflow_runs_end_to_end_and_selects_best_candidate",
+          "symbol_type": "function",
+          "line_no": 7,
+          "docstring": ""
+        }
+      ]
+    }
+  ],
+  "output_path": "/Users/shtsky/PycharmProjects/ZJUI/knowledge/extracted/ZJUI.json"
+}

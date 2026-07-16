@@ -1,0 +1,10 @@
+{
+  "task_name": "movie_homepage",
+  "capability_description": "Build a Top-K movie recommendation workflow for a homepage feed. Use implicit feedback, prioritize recall and ndcg, and keep it runnable on local cpu.",
+  "top_k": 5,
+  "constraints": [
+    "implicit feedback",
+    "local cpu"
+  ],
+  "candidate_count": 3
+}

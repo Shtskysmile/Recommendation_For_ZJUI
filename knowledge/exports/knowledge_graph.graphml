@@ -1,0 +1,160 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d4" for="edge" attr.name="type" attr.type="string" />
+  <key id="d3" for="node" attr.name="keywords" attr.type="string" />
+  <key id="d2" for="node" attr.name="description" attr.type="string" />
+  <key id="d1" for="node" attr.name="name" attr.type="string" />
+  <key id="d0" for="node" attr.name="type" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="capability::topk_recommendation">
+      <data key="d0">Capability</data>
+      <data key="d1">Top-K Recommendation Replication</data>
+      <data key="d2">Replicate a Top-K recommendation workflow for implicit-feedback movie ranking tasks.</data>
+      <data key="d3">["recommendation", "top-k", "ranking", "implicit", "feedback", "recall", "ndcg", "coverage", "movielens"]</data>
+    </node>
+    <node id="task::movie_homepage">
+      <data key="d0">TaskType</data>
+      <data key="d1">Movie Homepage Recommendation</data>
+      <data key="d2">Homepage or browse-page recommendation for movie platforms.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="algorithm::popularity">
+      <data key="d0">Algorithm</data>
+      <data key="d1">Popularity Baseline</data>
+      <data key="d2">Global item popularity ranking filtered by user history.</data>
+      <data key="d3">["baseline", "cold", "start", "explainable", "local", "cpu"]</data>
+    </node>
+    <node id="algorithm::itemcf">
+      <data key="d0">Algorithm</data>
+      <data key="d1">Item-Based Collaborative Filtering</data>
+      <data key="d2">Recommend unseen items using item-item similarity from user co-occurrence.</data>
+      <data key="d3">["collaborative", "filtering", "co-occurrence", "implicit", "feedback", "recall", "ndcg", "top-k"]</data>
+    </node>
+    <node id="algorithm::genre_affinity">
+      <data key="d0">Algorithm</data>
+      <data key="d1">Genre Affinity Recommender</data>
+      <data key="d2">Recommend unseen items by matching user interaction genres with candidate item genres.</data>
+      <data key="d3">["content", "based", "genre", "explainable", "cold", "start", "local", "cpu", "top-k"]</data>
+    </node>
+    <node id="metric::recall_at_k">
+      <data key="d0">Metric</data>
+      <data key="d1">Recall@K</data>
+      <data key="d2">Fraction of held-out relevant items found in the Top-K list.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="metric::ndcg_at_k">
+      <data key="d0">Metric</data>
+      <data key="d1">NDCG@K</data>
+      <data key="d2">Position-sensitive ranking quality for Top-K recommendation.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="metric::coverage">
+      <data key="d0">Metric</data>
+      <data key="d1">Coverage</data>
+      <data key="d2">Unique recommended items divided by unique catalog items.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="constraint::implicit_feedback">
+      <data key="d0">Constraint</data>
+      <data key="d1">Implicit Feedback Only</data>
+      <data key="d2">Training data is reduced to positive interactions.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="constraint::local_cpu">
+      <data key="d0">Constraint</data>
+      <data key="d1">Local CPU Execution</data>
+      <data key="d2">Algorithm must run on local CPU without external services.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="template::popularity_py">
+      <data key="d0">CodeTemplate</data>
+      <data key="d1">Popularity Python Template</data>
+      <data key="d2">Template for the popularity baseline.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="template::itemcf_py">
+      <data key="d0">CodeTemplate</data>
+      <data key="d1">ItemCF Python Template</data>
+      <data key="d2">Template for the item-based collaborative filtering baseline.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="template::genre_affinity_py">
+      <data key="d0">CodeTemplate</data>
+      <data key="d1">Genre Affinity Python Template</data>
+      <data key="d2">Template for the genre affinity recommender.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="failure::seen_items">
+      <data key="d0">FailurePattern</data>
+      <data key="d1">Seen Item Leakage</data>
+      <data key="d2">Recommended list contains items already observed in training history.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="failure::empty_list">
+      <data key="d0">FailurePattern</data>
+      <data key="d1">Empty Recommendation List</data>
+      <data key="d2">Candidate fails to emit Top-K items for one or more users.</data>
+      <data key="d3">[]</data>
+    </node>
+    <node id="failure::unsafe_code">
+      <data key="d0">FailurePattern</data>
+      <data key="d1">Unsafe Code Pattern</data>
+      <data key="d2">Generated candidate imports or executes unsafe modules or functions.</data>
+      <data key="d3">[]</data>
+    </node>
+    <edge source="capability::topk_recommendation" target="task::movie_homepage">
+      <data key="d4">supports</data>
+    </edge>
+    <edge source="capability::topk_recommendation" target="algorithm::popularity">
+      <data key="d4">uses</data>
+    </edge>
+    <edge source="capability::topk_recommendation" target="algorithm::itemcf">
+      <data key="d4">uses</data>
+    </edge>
+    <edge source="capability::topk_recommendation" target="algorithm::genre_affinity">
+      <data key="d4">uses</data>
+    </edge>
+    <edge source="algorithm::popularity" target="metric::coverage">
+      <data key="d4">evaluated_by</data>
+    </edge>
+    <edge source="algorithm::popularity" target="constraint::local_cpu">
+      <data key="d4">fits</data>
+    </edge>
+    <edge source="algorithm::popularity" target="template::popularity_py">
+      <data key="d4">implemented_by</data>
+    </edge>
+    <edge source="algorithm::itemcf" target="metric::recall_at_k">
+      <data key="d4">evaluated_by</data>
+    </edge>
+    <edge source="algorithm::itemcf" target="metric::ndcg_at_k">
+      <data key="d4">evaluated_by</data>
+    </edge>
+    <edge source="algorithm::itemcf" target="constraint::implicit_feedback">
+      <data key="d4">fits</data>
+    </edge>
+    <edge source="algorithm::itemcf" target="template::itemcf_py">
+      <data key="d4">implemented_by</data>
+    </edge>
+    <edge source="algorithm::genre_affinity" target="metric::coverage">
+      <data key="d4">evaluated_by</data>
+    </edge>
+    <edge source="algorithm::genre_affinity" target="constraint::local_cpu">
+      <data key="d4">fits</data>
+    </edge>
+    <edge source="algorithm::genre_affinity" target="template::genre_affinity_py">
+      <data key="d4">implemented_by</data>
+    </edge>
+    <edge source="failure::seen_items" target="algorithm::popularity">
+      <data key="d4">suggests_fix</data>
+    </edge>
+    <edge source="failure::seen_items" target="algorithm::genre_affinity">
+      <data key="d4">suggests_fix</data>
+    </edge>
+    <edge source="failure::empty_list" target="algorithm::itemcf">
+      <data key="d4">suggests_fix</data>
+    </edge>
+    <edge source="failure::unsafe_code" target="template::itemcf_py">
+      <data key="d4">suggests_fix</data>
+    </edge>
+  </graph>
+</graphml>
