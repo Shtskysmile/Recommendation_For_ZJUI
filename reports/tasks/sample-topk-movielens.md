@@ -2,7 +2,7 @@
 
 - Status: completed
 - Provider: mock
-- Capability version: draft-sample-topk-movielens
+- Capability version: 87dbc0ec
 - Task: movie_homepage
 - Top-K: 5
 
@@ -129,7 +129,7 @@ Build a Top-K movie recommendation workflow for a homepage feed. Use implicit fe
     "recall_at_k": 1.0,
     "ndcg_at_k": 1.0,
     "coverage": 1.0,
-    "average_latency_ms": 0.009472,
+    "average_latency_ms": 0.009444,
     "peak_allocated_kb": 1.703125
   },
   "errors": [],
@@ -157,7 +157,7 @@ Build a Top-K movie recommendation workflow for a homepage feed. Use implicit fe
     "recall_at_k": 0.333333,
     "ndcg_at_k": 0.166667,
     "coverage": 0.6,
-    "average_latency_ms": 0.001573,
+    "average_latency_ms": 0.001788,
     "peak_allocated_kb": 1.617188
   },
   "errors": [],
@@ -185,7 +185,7 @@ Build a Top-K movie recommendation workflow for a homepage feed. Use implicit fe
     "recall_at_k": 1.0,
     "ndcg_at_k": 0.958333,
     "coverage": 1.0,
-    "average_latency_ms": 0.018517,
+    "average_latency_ms": 0.019257,
     "peak_allocated_kb": 1.820312
   },
   "errors": [],
@@ -203,25 +203,10 @@ Build a Top-K movie recommendation workflow for a homepage feed. Use implicit fe
 {
   "is_git_repo": true,
   "branch": "main",
-  "head_commit": null,
-  "is_dirty": true,
+  "head_commit": "87dbc0ec47d96b6f6c77e62883a67899b2c89bd3",
+  "is_dirty": false,
   "staged_files": [],
   "unstaged_files": [],
-  "untracked_files": [
-    ".env.example",
-    ".gitignore",
-    "Dockerfile",
-    "README.md",
-    "app/",
-    "data/",
-    "docs/",
-    "examples/",
-    "generated/",
-    "knowledge/",
-    "pytest.ini",
-    "reports/",
-    "requirements.txt",
-    "tests/"
-  ]
+  "untracked_files": []
 }
 ```

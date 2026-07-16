@@ -147,6 +147,56 @@
       "name": "Unsafe Code Pattern",
       "description": "Generated candidate imports or executes unsafe modules or functions.",
       "keywords": []
+    },
+    {
+      "id": "validation::sample-topk-movielens",
+      "type": "ValidationResult",
+      "name": "Validation sample-topk-movielens",
+      "description": "Best candidate: itemcf-1",
+      "best_candidate_id": "itemcf-1",
+      "task_name": "movie_homepage",
+      "capability_version": "87dbc0ec",
+      "reports": [
+        {
+          "candidate_id": "itemcf-1",
+          "algorithm_key": "itemcf",
+          "success": true,
+          "score": 1.0,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "coverage": 1.0,
+            "average_latency_ms": 0.009444,
+            "peak_allocated_kb": 1.703125
+          }
+        },
+        {
+          "candidate_id": "popularity-2",
+          "algorithm_key": "popularity",
+          "success": true,
+          "score": 0.301667,
+          "metrics": {
+            "recall_at_k": 0.333333,
+            "ndcg_at_k": 0.166667,
+            "coverage": 0.6,
+            "average_latency_ms": 0.001788,
+            "peak_allocated_kb": 1.617188
+          }
+        },
+        {
+          "candidate_id": "genre_affinity-3",
+          "algorithm_key": "genre_affinity",
+          "success": true,
+          "score": 0.985417,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 0.958333,
+            "coverage": 1.0,
+            "average_latency_ms": 0.019257,
+            "peak_allocated_kb": 1.820312
+          }
+        }
+      ]
     }
   ],
   "edges": [
@@ -239,6 +289,32 @@
       "source": "failure::unsafe_code",
       "target": "template::itemcf_py",
       "type": "suggests_fix"
+    },
+    {
+      "source": "validation::sample-topk-movielens",
+      "target": "capability::topk_recommendation",
+      "type": "verifies"
+    },
+    {
+      "source": "validation::sample-topk-movielens",
+      "target": "algorithm::itemcf",
+      "type": "evaluated",
+      "success": true,
+      "score": 1.0
+    },
+    {
+      "source": "validation::sample-topk-movielens",
+      "target": "algorithm::popularity",
+      "type": "evaluated",
+      "success": true,
+      "score": 0.301667
+    },
+    {
+      "source": "validation::sample-topk-movielens",
+      "target": "algorithm::genre_affinity",
+      "type": "evaluated",
+      "success": true,
+      "score": 0.985417
     }
   ]
 }

@@ -1,6 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
 <graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
-  <key id="d4" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="score" attr.type="string" />
+  <key id="d9" for="edge" attr.name="success" attr.type="string" />
+  <key id="d8" for="edge" attr.name="type" attr.type="string" />
+  <key id="d7" for="node" attr.name="reports" attr.type="string" />
+  <key id="d6" for="node" attr.name="capability_version" attr.type="string" />
+  <key id="d5" for="node" attr.name="task_name" attr.type="string" />
+  <key id="d4" for="node" attr.name="best_candidate_id" attr.type="string" />
   <key id="d3" for="node" attr.name="keywords" attr.type="string" />
   <key id="d2" for="node" attr.name="description" attr.type="string" />
   <key id="d1" for="node" attr.name="name" attr.type="string" />
@@ -102,59 +108,86 @@
       <data key="d2">Generated candidate imports or executes unsafe modules or functions.</data>
       <data key="d3">[]</data>
     </node>
+    <node id="validation::sample-topk-movielens">
+      <data key="d0">ValidationResult</data>
+      <data key="d1">Validation sample-topk-movielens</data>
+      <data key="d2">Best candidate: itemcf-1</data>
+      <data key="d4">itemcf-1</data>
+      <data key="d5">movie_homepage</data>
+      <data key="d6">87dbc0ec</data>
+      <data key="d7">[{"candidate_id": "itemcf-1", "algorithm_key": "itemcf", "success": true, "score": 1.0, "metrics": {"recall_at_k": 1.0, "ndcg_at_k": 1.0, "coverage": 1.0, "average_latency_ms": 0.009444, "peak_allocated_kb": 1.703125}}, {"candidate_id": "popularity-2", "algorithm_key": "popularity", "success": true, "score": 0.301667, "metrics": {"recall_at_k": 0.333333, "ndcg_at_k": 0.166667, "coverage": 0.6, "average_latency_ms": 0.001788, "peak_allocated_kb": 1.617188}}, {"candidate_id": "genre_affinity-3", "algorithm_key": "genre_affinity", "success": true, "score": 0.985417, "metrics": {"recall_at_k": 1.0, "ndcg_at_k": 0.958333, "coverage": 1.0, "average_latency_ms": 0.019257, "peak_allocated_kb": 1.820312}}]</data>
+    </node>
     <edge source="capability::topk_recommendation" target="task::movie_homepage">
-      <data key="d4">supports</data>
+      <data key="d8">supports</data>
     </edge>
     <edge source="capability::topk_recommendation" target="algorithm::popularity">
-      <data key="d4">uses</data>
+      <data key="d8">uses</data>
     </edge>
     <edge source="capability::topk_recommendation" target="algorithm::itemcf">
-      <data key="d4">uses</data>
+      <data key="d8">uses</data>
     </edge>
     <edge source="capability::topk_recommendation" target="algorithm::genre_affinity">
-      <data key="d4">uses</data>
+      <data key="d8">uses</data>
     </edge>
     <edge source="algorithm::popularity" target="metric::coverage">
-      <data key="d4">evaluated_by</data>
+      <data key="d8">evaluated_by</data>
     </edge>
     <edge source="algorithm::popularity" target="constraint::local_cpu">
-      <data key="d4">fits</data>
+      <data key="d8">fits</data>
     </edge>
     <edge source="algorithm::popularity" target="template::popularity_py">
-      <data key="d4">implemented_by</data>
+      <data key="d8">implemented_by</data>
     </edge>
     <edge source="algorithm::itemcf" target="metric::recall_at_k">
-      <data key="d4">evaluated_by</data>
+      <data key="d8">evaluated_by</data>
     </edge>
     <edge source="algorithm::itemcf" target="metric::ndcg_at_k">
-      <data key="d4">evaluated_by</data>
+      <data key="d8">evaluated_by</data>
     </edge>
     <edge source="algorithm::itemcf" target="constraint::implicit_feedback">
-      <data key="d4">fits</data>
+      <data key="d8">fits</data>
     </edge>
     <edge source="algorithm::itemcf" target="template::itemcf_py">
-      <data key="d4">implemented_by</data>
+      <data key="d8">implemented_by</data>
     </edge>
     <edge source="algorithm::genre_affinity" target="metric::coverage">
-      <data key="d4">evaluated_by</data>
+      <data key="d8">evaluated_by</data>
     </edge>
     <edge source="algorithm::genre_affinity" target="constraint::local_cpu">
-      <data key="d4">fits</data>
+      <data key="d8">fits</data>
     </edge>
     <edge source="algorithm::genre_affinity" target="template::genre_affinity_py">
-      <data key="d4">implemented_by</data>
+      <data key="d8">implemented_by</data>
     </edge>
     <edge source="failure::seen_items" target="algorithm::popularity">
-      <data key="d4">suggests_fix</data>
+      <data key="d8">suggests_fix</data>
     </edge>
     <edge source="failure::seen_items" target="algorithm::genre_affinity">
-      <data key="d4">suggests_fix</data>
+      <data key="d8">suggests_fix</data>
     </edge>
     <edge source="failure::empty_list" target="algorithm::itemcf">
-      <data key="d4">suggests_fix</data>
+      <data key="d8">suggests_fix</data>
     </edge>
     <edge source="failure::unsafe_code" target="template::itemcf_py">
-      <data key="d4">suggests_fix</data>
+      <data key="d8">suggests_fix</data>
+    </edge>
+    <edge source="validation::sample-topk-movielens" target="capability::topk_recommendation">
+      <data key="d8">verifies</data>
+    </edge>
+    <edge source="validation::sample-topk-movielens" target="algorithm::itemcf">
+      <data key="d8">evaluated</data>
+      <data key="d9">True</data>
+      <data key="d10">1.0</data>
+    </edge>
+    <edge source="validation::sample-topk-movielens" target="algorithm::popularity">
+      <data key="d8">evaluated</data>
+      <data key="d9">True</data>
+      <data key="d10">0.301667</data>
+    </edge>
+    <edge source="validation::sample-topk-movielens" target="algorithm::genre_affinity">
+      <data key="d8">evaluated</data>
+      <data key="d9">True</data>
+      <data key="d10">0.985417</data>
     </edge>
   </graph>
 </graphml>

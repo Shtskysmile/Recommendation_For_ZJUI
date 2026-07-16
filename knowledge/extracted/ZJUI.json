@@ -14,7 +14,7 @@
     "pytest-cov",
     "uvicorn"
   ],
-  "python_file_count": 34,
+  "python_file_count": 31,
   "files": [
     {
       "path": "app/__init__.py",
@@ -565,38 +565,6 @@
       ]
     },
     {
-      "path": "generated/sample-topk-movielens/genre_affinity-3_repair_1.py",
-      "imports": [
-        "__future__",
-        "collections",
-        "pandas"
-      ],
-      "symbols": [
-        {
-          "name": "GeneratedRecommender",
-          "symbol_type": "class",
-          "line_no": 11,
-          "docstring": ""
-        }
-      ]
-    },
-    {
-      "path": "generated/sample-topk-movielens/genre_affinity-3_repair_2.py",
-      "imports": [
-        "__future__",
-        "collections",
-        "pandas"
-      ],
-      "symbols": [
-        {
-          "name": "GeneratedRecommender",
-          "symbol_type": "class",
-          "line_no": 11,
-          "docstring": ""
-        }
-      ]
-    },
-    {
       "path": "generated/sample-topk-movielens/itemcf-1.py",
       "imports": [
         "__future__",
@@ -623,22 +591,6 @@
           "name": "GeneratedRecommender",
           "symbol_type": "class",
           "line_no": 9,
-          "docstring": ""
-        }
-      ]
-    },
-    {
-      "path": "generated/siliconflow-smoke/itemcf-1.py",
-      "imports": [
-        "__future__",
-        "math",
-        "pandas"
-      ],
-      "symbols": [
-        {
-          "name": "GeneratedRecommender",
-          "symbol_type": "class",
-          "line_no": 11,
           "docstring": ""
         }
       ]
