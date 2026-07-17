@@ -6,6 +6,9 @@ from pathlib import Path
 import pandas as pd
 
 
+DEFAULT_RECOMMENDATION_DATASET = "movielens_latest_small"
+
+
 @dataclass(slots=True)
 class RecommendationDataset:
     interactions_df: pd.DataFrame
