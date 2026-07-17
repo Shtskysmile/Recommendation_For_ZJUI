@@ -6,3 +6,6 @@ __pycache__/
 .env
 .DS_Store
 .idea/
+generated/task-*/
+reports/tasks/task-*.json
+reports/tasks/task-*.md
