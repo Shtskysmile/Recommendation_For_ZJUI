@@ -1,7 +1,7 @@
 {
   "key": "top_k_recommendation",
-  "display_name": "Top-K Recommendation Validation",
-  "description": "Validation profile for recommendation algorithms returning ranked item lists.",
+  "display_name": "Top-K 推荐验证配置",
+  "description": "用于返回排序物品列表的推荐算法验证配置。",
   "task_types": ["top_k_recommendation"],
   "class_path": "app.profile_library:TopKRecommendationProfile"
 }

@@ -1,8 +1,8 @@
 {
   "key": "majority_class",
-  "display_name": "Majority Classifier",
-  "summary": "Predict the majority label from the training set as a classification baseline.",
-  "rationale": "Provides a deterministic baseline for tabular classification and sanity-checks the validation profile.",
+  "display_name": "多数类分类器",
+  "summary": "使用训练集中的多数标签作为分类基线进行预测。",
+  "rationale": "为表格分类提供稳定、可复现的基线方案，并用于校验验证流程是否正常。",
   "family": "baseline",
   "strengths": ["baseline", "simplicity", "local_cpu"],
   "search_hints": ["baseline", "classification", "tabular", "local cpu"],

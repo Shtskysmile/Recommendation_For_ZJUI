@@ -1,31 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Capability Factory</title>
+    <title>AI Agent 算法能力工厂</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
     <div class="page-shell">
       <header class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">AI Capability Factory</p>
-          <h1>Capability Factory for Top-K Recommendation</h1>
+          <p class="eyebrow">AI Agent 算法能力工厂</p>
+          <h1>基于 AI Agent 的算法能力工厂原型系统</h1>
           <p class="lede">
-            Submit a natural-language recommendation capability, inspect the retrieved knowledge,
-            compare generated candidates, and review the validation report that gets written back
-            to the graph.
+            提交自然语言能力描述，系统会自动完成能力理解、知识检索、候选方案搜索、
+            代码生成、自动验证、修复与知识图谱回写，并展示完整执行结果。
           </p>
         </div>
         <div class="hero-meta">
           <div class="meta-card">
-            <span class="meta-label">LLM Provider</span>
+            <span class="meta-label">LLM 提供方</span>
             <strong id="provider-name">{{ provider_name }}</strong>
           </div>
           <div class="meta-card">
-            <span class="meta-label">Task Pattern</span>
-            <strong>Top-K Recommendation</strong>
+            <span class="meta-label">默认演示场景</span>
+            <strong>Top-K 推荐</strong>
           </div>
         </div>
       </header>
@@ -33,16 +32,16 @@
       <main class="grid">
         <section class="panel panel-form">
           <div class="panel-heading">
-            <h2>Generate Capability</h2>
-            <p>MovieLens-derived implicit feedback demo</p>
+            <h2>生成能力方案</h2>
+            <p>MovieLens 隐式反馈推荐演示</p>
           </div>
           <form id="task-form">
             <label>
-              <span>Task name</span>
-              <input id="task-name" name="task_name" type="text" value="movie_homepage" />
+              <span>任务名称</span>
+              <input id="task-name" name="task_name" type="text" value="电影首页推荐" />
             </label>
             <label>
-              <span>Capability description</span>
+              <span>能力描述</span>
               <textarea id="capability-description" name="capability_description" rows="8">{{ default_description }}</textarea>
             </label>
             <div class="field-row">
@@ -51,92 +50,108 @@
                 <input id="top-k" name="top_k" type="number" min="1" max="20" value="{{ default_top_k }}" />
               </label>
               <label>
-                <span>Candidate count</span>
+                <span>候选方案数</span>
                 <input id="candidate-count" name="candidate_count" type="number" min="1" max="2" value="2" />
               </label>
             </div>
             <label>
-              <span>Constraints</span>
-              <input id="constraints" name="constraints" type="text" value="implicit feedback, local cpu" />
+              <span>约束条件</span>
+              <input id="constraints" name="constraints" type="text" value="隐式反馈, 本地 CPU" />
             </label>
-            <button type="submit" id="submit-button">Run Capability Workflow</button>
+            <button type="submit" id="submit-button">运行能力工作流</button>
           </form>
         </section>
 
         <section class="panel panel-status">
           <div class="panel-heading">
-            <h2>Task Status</h2>
-            <p>Async execution and polling</p>
+            <h2>任务状态</h2>
+            <p>异步执行与轮询</p>
           </div>
           <div class="status-strip">
-            <span class="status-label">Current state</span>
-            <span id="task-status" class="status-pill idle">Idle</span>
+            <span class="status-label">当前状态</span>
+            <span id="task-status" class="status-pill idle">空闲</span>
           </div>
           <div id="task-summary" class="summary-copy">
-            Submit a capability description to generate candidate recommenders and validate them.
+            提交能力描述后，系统会自动生成候选算法方案并完成验证。
           </div>
         </section>
 
         <section class="panel">
           <div class="panel-heading">
-            <h2>Parsed Intent</h2>
-            <p>Planner output</p>
+            <h2>解析后的意图</h2>
+            <p>规划代理输出</p>
           </div>
           <pre id="parsed-intent" class="code-block">{}</pre>
         </section>
 
         <section class="panel">
           <div class="panel-heading">
-            <h2>Retrieved Knowledge</h2>
-            <p>Graph-backed capability context</p>
+            <h2>检索到的知识</h2>
+            <p>图谱增强的能力上下文</p>
           </div>
           <pre id="retrieved-knowledge" class="code-block">{}</pre>
         </section>
 
         <section class="panel">
           <div class="panel-heading">
-            <h2>Agent Trace</h2>
-            <p>Multi-agent workflow and beam search trace</p>
+            <h2>Agent 执行轨迹</h2>
+            <p>多智能体工作流与 Beam Search 轨迹</p>
           </div>
           <pre id="agent-trace" class="code-block">[]</pre>
         </section>
 
         <section class="panel">
           <div class="panel-heading">
-            <h2>Git Status</h2>
-            <p>Repository context and version state</p>
+            <h2>Git 状态</h2>
+            <p>仓库上下文与版本状态</p>
           </div>
           <pre id="git-status" class="code-block">{}</pre>
         </section>
 
         <section class="panel panel-wide">
           <div class="panel-heading">
-            <h2>Candidate Comparison</h2>
-            <p>Generated code, metrics, and selection</p>
+            <h2>候选方案对比</h2>
+            <p>生成代码、验证指标与最终选择</p>
           </div>
           <div id="candidate-container" class="candidate-grid"></div>
         </section>
 
         <section class="panel">
           <div class="panel-heading">
-            <h2>Repair History</h2>
-            <p>Automatic fix attempts</p>
+            <h2>修复历史</h2>
+            <p>自动修复尝试记录</p>
           </div>
           <pre id="repair-history" class="code-block">[]</pre>
         </section>
 
-        <section class="panel">
+        <section class="panel panel-wide movie-graph-panel">
           <div class="panel-heading">
-            <h2>Knowledge Graph View</h2>
-            <p>Visual layout generated from the exported graph</p>
+            <h2>电影推荐图谱</h2>
+            <p>基于真实 MovieLens 评分构建的用户、电影与类型关系</p>
           </div>
-          <svg id="graph-view" class="graph-view" viewBox="0 0 520 320" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="graph-toolbar" aria-label="图谱图例">
+            <span><i class="legend-dot user"></i>目标用户</span>
+            <span><i class="legend-dot movie"></i>电影</span>
+            <span><i class="legend-dot recommended"></i>推荐电影</span>
+            <span><i class="legend-dot genre"></i>类型</span>
+          </div>
+          <div class="graph-scroll">
+            <svg
+              id="graph-view"
+              class="graph-view"
+              viewBox="0 0 960 580"
+              preserveAspectRatio="xMidYMid meet"
+              role="img"
+              aria-label="电影推荐关系图"
+            ></svg>
+          </div>
+          <div id="graph-meta" class="graph-meta"></div>
         </section>
 
-        <section class="panel">
+        <section class="panel panel-wide">
           <div class="panel-heading">
-            <h2>Knowledge Graph Snapshot</h2>
-            <p>Current exported graph payload</p>
+            <h2>推荐图谱数据</h2>
+            <p>当前用户画像、候选电影和关系快照</p>
           </div>
           <pre id="graph-snapshot" class="code-block">{}</pre>
         </section>

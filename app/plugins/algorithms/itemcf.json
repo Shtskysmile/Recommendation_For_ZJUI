@@ -1,8 +1,8 @@
 {
   "key": "itemcf",
-  "display_name": "Item-Based Collaborative Filtering",
-  "summary": "Score candidate items by similarity to each user's interacted items.",
-  "rationale": "Better aligned with Top-K recommendation quality metrics such as Recall@K and NDCG@K.",
+  "display_name": "基于物品的协同过滤",
+  "summary": "根据候选物品与用户已交互物品的相似度进行打分排序。",
+  "rationale": "与 Recall@K、NDCG@K 这类 Top-K 推荐质量指标更匹配。",
   "family": "collaborative_filtering",
   "strengths": ["recall", "ndcg", "implicit_feedback", "ranking"],
   "search_hints": ["recall", "ndcg", "implicit feedback", "ranking", "top-k"],

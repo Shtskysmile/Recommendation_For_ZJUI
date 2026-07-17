@@ -10,17 +10,42 @@ const candidateContainer = document.getElementById("candidate-container");
 const repairHistory = document.getElementById("repair-history");
 const graphSnapshot = document.getElementById("graph-snapshot");
 const graphView = document.getElementById("graph-view");
+const graphMeta = document.getElementById("graph-meta");
 
 let activeTaskId = null;
 let pollTimer = null;
+
+const STATUS_TEXT = {
+  idle: "空闲",
+  queued: "排队中",
+  running: "运行中",
+  completed: "已完成",
+  failed: "失败"
+};
+
+function normalizeConstraintLabel(value) {
+  const normalized = String(value).trim().toLowerCase();
+  if (!normalized) {
+    return "";
+  }
+  if (normalized.includes("隐式") || normalized.includes("implicit")) {
+    return "implicit feedback";
+  }
+  if ((normalized.includes("本地") && normalized.includes("cpu")) || normalized === "本地cpu" || normalized === "local cpu") {
+    return "local cpu";
+  }
+  return String(value).trim();
+}
 
 function prettyJson(value) {
   return JSON.stringify(value ?? {}, null, 2);
 }
 
 function setStatus(value) {
-  statusPill.textContent = value;
-  statusPill.className = `status-pill ${String(value).toLowerCase()}`;
+  const normalized = String(value).toLowerCase();
+  const styleKey = normalized === "queued" ? "running" : normalized;
+  statusPill.textContent = STATUS_TEXT[normalized] ?? value;
+  statusPill.className = `status-pill ${styleKey}`;
 }
 
 function buildCandidateCard(candidate, bestCandidateId) {
@@ -34,9 +59,9 @@ function buildCandidateCard(candidate, bestCandidateId) {
     <div class="candidate-header">
       <div>
         <h3>${candidate.display_name}</h3>
-        <div class="status-pill ${report.success ? "completed" : "failed"}">${report.success ? "validated" : "failed"}</div>
+        <div class="status-pill ${report.success ? "completed" : "failed"}">${report.success ? "验证通过" : "验证失败"}</div>
       </div>
-      <strong>${candidate.algorithm_key}</strong>
+      <strong>算法键：${candidate.algorithm_key}</strong>
     </div>
     <p class="candidate-meta">${candidate.plan_summary}</p>
     <pre class="code-block">${prettyJson({
@@ -53,9 +78,13 @@ function buildCandidateCard(candidate, bestCandidateId) {
 
 function renderTask(task) {
   setStatus(task.status);
-  summary.textContent = task.best_candidate
-    ? `Best candidate: ${task.best_candidate.display_name} with score ${task.best_candidate.validation?.score ?? 0}.`
-    : task.error_message || "Task is still running.";
+  if (task.best_candidate) {
+    summary.textContent = `最佳候选方案：${task.best_candidate.display_name}，得分 ${task.best_candidate.validation?.score ?? 0}。`;
+  } else if (task.status === "failed") {
+    summary.textContent = task.error_message ? `任务失败：${task.error_message}` : "任务执行失败。";
+  } else {
+    summary.textContent = "任务仍在执行中。";
+  }
   parsedIntent.textContent = prettyJson(task.parsed_intent);
   retrievedKnowledge.textContent = prettyJson(task.retrieved_knowledge);
   agentTrace.textContent = prettyJson(task.agent_trace ?? []);
@@ -69,28 +98,27 @@ function renderTask(task) {
 }
 
 async function fetchGraph() {
-  const [graphResponse, layoutResponse, gitResponse] = await Promise.all([
-    fetch("/knowledge/graph"),
-    fetch("/knowledge/graph/layout"),
+  const [graphResponse, gitResponse] = await Promise.all([
+    fetch("/recommendation/graph"),
     fetch("/git/status")
   ]);
   const graphPayload = await graphResponse.json();
-  const layoutPayload = await layoutResponse.json();
   const gitPayload = await gitResponse.json();
   graphSnapshot.textContent = prettyJson(graphPayload);
   gitStatus.textContent = prettyJson(gitPayload);
-  renderGraph(layoutPayload);
+  graphMeta.textContent = `${graphPayload.dataset.source} · ${graphPayload.dataset.users} 位用户 · ${graphPayload.dataset.movies} 部电影 · ${graphPayload.dataset.positive_interactions} 条高评分记录`;
+  renderGraph(graphPayload);
 }
 
 function renderGraph(layoutPayload) {
   while (graphView.firstChild) {
     graphView.removeChild(graphView.firstChild);
   }
-  const width = 520;
-  const height = 320;
+  const width = 960;
+  const height = 580;
   const nodeMap = new Map(layoutPayload.nodes.map((node) => [node.id, node]));
 
-  const toScreen = (value, size) => ((value + 1) / 2) * (size - 48) + 24;
+  const toScreen = (value, size) => value * size;
 
   for (const edge of layoutPayload.edges) {
     const source = nodeMap.get(edge.source);
@@ -99,7 +127,7 @@ function renderGraph(layoutPayload) {
       continue;
     }
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("class", "graph-edge");
+    line.setAttribute("class", `graph-edge ${edge.type}`);
     line.setAttribute("x1", String(toScreen(source.x, width)));
     line.setAttribute("y1", String(toScreen(source.y, height)));
     line.setAttribute("x2", String(toScreen(target.x, width)));
@@ -111,19 +139,34 @@ function renderGraph(layoutPayload) {
     const x = toScreen(node.x, width);
     const y = toScreen(node.y, height);
 
+    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const typeClass = String(node.type).toLowerCase();
+    group.setAttribute("class", `graph-node-group ${typeClass}${node.recommended ? " recommended" : ""}`);
+
     const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     circle.setAttribute("class", "graph-node");
     circle.setAttribute("cx", String(x));
     circle.setAttribute("cy", String(y));
-    circle.setAttribute("r", "7");
-    graphView.appendChild(circle);
+    circle.setAttribute("r", node.type === "User" ? "18" : node.type === "Genre" ? "14" : "12");
+    group.appendChild(circle);
 
     const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
     label.setAttribute("class", "graph-label");
-    label.setAttribute("x", String(x + 10));
-    label.setAttribute("y", String(y - 8));
-    label.textContent = String(node.label).slice(0, 26);
-    graphView.appendChild(label);
+    label.setAttribute("x", String(x));
+    label.setAttribute("y", String(y + 31));
+    label.setAttribute("text-anchor", "middle");
+    label.textContent = String(node.label).slice(0, 22);
+    group.appendChild(label);
+
+    const detail = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    detail.setAttribute("class", "graph-detail");
+    detail.setAttribute("x", String(x));
+    detail.setAttribute("y", String(y + 48));
+    detail.setAttribute("text-anchor", "middle");
+    detail.textContent = String(node.detail ?? "").slice(0, 26);
+    group.appendChild(detail);
+
+    graphView.appendChild(group);
   }
 }
 
@@ -143,7 +186,7 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
   submitButton.disabled = true;
   setStatus("running");
-  summary.textContent = "Submitting task and starting background workflow.";
+  summary.textContent = "正在提交任务并启动后台工作流。";
 
   const payload = {
     task_name: document.getElementById("task-name").value.trim(),
@@ -154,7 +197,7 @@ form.addEventListener("submit", async (event) => {
       .getElementById("constraints")
       .value
       .split(",")
-      .map((part) => part.trim())
+      .map((part) => normalizeConstraintLabel(part))
       .filter(Boolean)
   };
 
@@ -165,7 +208,7 @@ form.addEventListener("submit", async (event) => {
   });
   const task = await response.json();
   activeTaskId = task.task_id;
-  summary.textContent = `Task ${activeTaskId} queued. Polling for completion.`;
+  summary.textContent = `任务 ${activeTaskId} 已进入队列，正在轮询执行结果。`;
 
   if (pollTimer) {
     clearInterval(pollTimer);

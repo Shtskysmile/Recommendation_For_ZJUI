@@ -1,7 +1,7 @@
 {
   "key": "tabular_classification",
-  "display_name": "Tabular Classification Validation",
-  "description": "Validation profile for tabular binary classification tasks.",
+  "display_name": "表格分类验证配置",
+  "description": "用于表格二分类任务的验证配置。",
   "task_types": ["tabular_classification"],
   "class_path": "app.profile_library:TabularClassificationProfile"
 }

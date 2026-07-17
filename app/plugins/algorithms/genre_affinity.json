@@ -1,8 +1,8 @@
 {
   "key": "genre_affinity",
-  "display_name": "Genre Affinity Recommender",
-  "summary": "Estimate user preference from interaction genres and rank unseen items by genre affinity.",
-  "rationale": "Adds a content-oriented candidate that is easy to explain and transfers better to sparse histories.",
+  "display_name": "类型偏好推荐器",
+  "summary": "根据用户交互过的影片类型估计偏好，并按类型亲和度对未看过的物品排序。",
+  "rationale": "提供一个偏内容侧、可解释性更强的候选方案，在稀疏历史场景下更容易迁移。",
   "family": "content_based",
   "strengths": ["explainability", "content", "local_cpu", "cold_start"],
   "search_hints": ["content", "genre", "explain", "cold start", "sparse"],

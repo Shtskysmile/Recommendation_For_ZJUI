@@ -1,8 +1,8 @@
 {
   "key": "popularity",
-  "display_name": "Popularity Baseline",
-  "summary": "Use global item frequency as a strong local baseline with clear behavior.",
-  "rationale": "Good for cold-start fallback, coverage checks, and interface validation.",
+  "display_name": "热门度基线",
+  "summary": "使用全局物品流行度作为本地可运行且行为清晰的强基线。",
+  "rationale": "适合作为冷启动兜底方案，也便于做覆盖率检查和接口验证。",
   "family": "baseline",
   "strengths": ["cold_start", "coverage", "simplicity", "local_cpu"],
   "search_hints": ["baseline", "cold start", "local cpu", "coverage"],

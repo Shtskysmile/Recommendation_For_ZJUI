@@ -11,8 +11,9 @@ def test_index_page_renders(test_settings):
     response = client.get("/")
 
     assert response.status_code == 200
-    assert "Capability Factory" in response.text
-    assert "Top-K Recommendation" in response.text
+    assert "AI Agent 算法能力工厂" in response.text
+    assert "Top-K 推荐" in response.text
+    assert "生成能力方案" in response.text
 
 
 def test_task_api_completes_and_exposes_graph(test_settings):
@@ -56,6 +57,34 @@ def test_task_api_completes_and_exposes_graph(test_settings):
     layout_payload = layout_response.json()
     assert layout_payload["nodes"]
     assert "x" in layout_payload["nodes"][0]
+
+
+def test_movie_recommendation_graph_uses_domain_entities_and_readable_layout(test_settings):
+    client = TestClient(create_app(test_settings))
+
+    response = client.get("/recommendation/graph")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["dataset"]["source"] == "GroupLens MovieLens Latest Small"
+    assert 8 <= len(payload["nodes"]) <= 30
+
+    node_types = {node["type"] for node in payload["nodes"]}
+    assert node_types <= {"User", "Movie", "Genre"}
+    assert {"User", "Movie", "Genre"} <= node_types
+    assert not node_types.intersection({"Capability", "Algorithm", "Metric", "CodeTemplate"})
+
+    relation_types = {edge["type"] for edge in payload["edges"]}
+    assert {"liked", "recommended", "belongs_to"} <= relation_types
+
+    positions = [(node["x"], node["y"]) for node in payload["nodes"]]
+    assert all(0.0 <= coordinate <= 1.0 for position in positions for coordinate in position)
+    min_distance_squared = min(
+        (left_x - right_x) ** 2 + (left_y - right_y) ** 2
+        for index, (left_x, left_y) in enumerate(positions)
+        for right_x, right_y in positions[index + 1 :]
+    )
+    assert min_distance_squared >= 0.006
 
 
 def test_repo_ingestion_api_extracts_repo_knowledge(test_settings, tmp_path: Path):

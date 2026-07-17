@@ -7,7 +7,9 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app.data import DEFAULT_RECOMMENDATION_DATASET
 from app.models import GenerationRequest, GitSnapshotRequest, RepoIngestionRequest
+from app.movie_graph import MovieRecommendationGraph
 from app.repo_mining import RepoKnowledgeExtractor
 from app.settings import AppSettings
 from app.tasks import TaskManager
@@ -24,11 +26,14 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     template_dir = package_root / "ui" / "templates"
     templates = Jinja2Templates(directory=str(template_dir))
 
-    app = FastAPI(title="AI Capability Factory", version="0.1.0")
+    app = FastAPI(title="AI Agent 算法能力工厂", version="0.1.0")
     app.state.settings = resolved_settings
     app.state.service = service
     app.state.task_manager = manager
     app.state.repo_extractor = RepoKnowledgeExtractor(resolved_settings.knowledge_dir)
+    app.state.movie_graph = MovieRecommendationGraph(
+        resolved_settings.data_dir / DEFAULT_RECOMMENDATION_DATASET
+    )
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
     @app.get("/", response_class=HTMLResponse)
@@ -40,8 +45,8 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
                 "provider_name": service.provider_name,
                 "default_top_k": resolved_settings.top_k_default,
                 "default_description": (
-                    "Build a Top-K movie recommendation workflow for a homepage feed. "
-                    "Use implicit feedback, prioritize recall and ndcg, and keep it runnable on local cpu."
+                    "请为电影首页信息流构建一个 Top-K 推荐能力工作流。"
+                    "要求使用隐式反馈，优先优化 recall 和 ndcg，并保证能够在本地 CPU 环境运行。"
                 ),
             },
         )
@@ -76,6 +81,10 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     @app.get("/knowledge/graph/layout")
     async def get_knowledge_graph_layout() -> JSONResponse:
         return JSONResponse(service.knowledge_store.layout_payload())
+
+    @app.get("/recommendation/graph")
+    async def get_movie_recommendation_graph() -> JSONResponse:
+        return JSONResponse(app.state.movie_graph.payload())
 
     @app.post("/knowledge/ingest-repo")
     async def ingest_repo(payload: RepoIngestionRequest) -> JSONResponse:

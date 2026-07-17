@@ -114,6 +114,7 @@ body {
 
 .panel {
   padding: 24px;
+  min-width: 0;
 }
 
 .panel-wide {
@@ -293,34 +294,117 @@ button:disabled {
   font-family: "SFMono-Regular", "JetBrains Mono", Menlo, monospace;
   font-size: 0.9rem;
   min-height: 140px;
+  max-width: 100%;
 }
 
 .graph-view {
   width: 100%;
-  min-height: 320px;
-  border-radius: 18px;
-  background:
-    radial-gradient(circle at top, rgba(183, 77, 44, 0.12), transparent 42%),
-    linear-gradient(180deg, rgba(24, 37, 58, 0.96), rgba(18, 28, 44, 0.98));
+  aspect-ratio: 16 / 10;
+  max-height: 680px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(24, 37, 58, 0.96), rgba(18, 28, 44, 0.98));
   border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
+.graph-scroll {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
+.graph-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  margin-bottom: 14px;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+}
+
+.graph-toolbar span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #e9e2d5;
+}
+
+.legend-dot.user {
+  background: #d8633c;
+}
+
+.legend-dot.recommended {
+  background: #f0c45d;
+  box-shadow: 0 0 0 3px rgba(240, 196, 93, 0.22);
+}
+
+.legend-dot.genre {
+  background: #73b6a4;
+}
+
+.graph-meta {
+  margin-top: 12px;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 .graph-edge {
-  stroke: rgba(244, 239, 229, 0.2);
-  stroke-width: 1.2;
+  stroke: rgba(244, 239, 229, 0.16);
+  stroke-width: 1.4;
+}
+
+.graph-edge.liked {
+  stroke: rgba(216, 99, 60, 0.58);
+  stroke-width: 2.2;
+}
+
+.graph-edge.recommended {
+  stroke: rgba(240, 196, 93, 0.8);
+  stroke-width: 2.6;
+  stroke-dasharray: 7 5;
 }
 
 .graph-node {
-  fill: #f4efe5;
-  stroke: rgba(183, 77, 44, 0.45);
-  stroke-width: 1.5;
+  fill: #e9e2d5;
+  stroke: rgba(255, 255, 255, 0.65);
+  stroke-width: 2;
+}
+
+.graph-node-group.user .graph-node {
+  fill: #d8633c;
+}
+
+.graph-node-group.genre .graph-node {
+  fill: #73b6a4;
+}
+
+.graph-node-group.recommended .graph-node {
+  fill: #f0c45d;
+  stroke: #fff1bd;
+  stroke-width: 5;
 }
 
 .graph-label {
   fill: #f8f4ee;
-  font-size: 11px;
-  font-family: "SFMono-Regular", "JetBrains Mono", Menlo, monospace;
+  font-size: 13px;
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.graph-detail {
+  fill: rgba(248, 244, 238, 0.6);
+  font-size: 10px;
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  letter-spacing: 0;
 }
 
 @media (max-width: 960px) {
@@ -328,11 +412,23 @@ button:disabled {
   .grid,
   .candidate-grid,
   .field-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .page-shell {
-    width: min(100vw - 20px, 1240px);
+    width: min(1240px, calc(100vw - 20px));
     padding-top: 20px;
+  }
+
+  .panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .graph-view {
+    width: 760px;
+    min-width: 760px;
+    min-height: 0;
   }
 }
