@@ -3,6 +3,7 @@ from pathlib import Path
 from app.codegen import CandidateGenerator
 from app.data import CustomerChurnDatasetLoader, MovieLensDatasetLoader
 from app.models import CapabilitySpec
+from app.profile_library import TabularClassificationProfile, TopKRecommendationProfile
 from app.repair import RepairAgent
 from app.validation import CandidateValidator
 
@@ -35,6 +36,44 @@ def test_validator_accepts_popularity_template(test_settings):
     assert report.success is True
     assert report.metrics.coverage > 0
     assert report.execution_mode == "subprocess_sandbox"
+
+
+def test_top_k_profile_validates_generated_candidate_in_process(test_settings, tmp_path):
+    dataset = MovieLensDatasetLoader(test_settings.data_dir / "movielens_sample").load()
+    generator = CandidateGenerator(test_settings)
+    spec = CapabilitySpec(
+        task_name="movie_homepage",
+        objective="Create a Top-K movie recommendation workflow.",
+        task_type="top_k_recommendation",
+        dataset_name="movielens_sample",
+        top_k=5,
+        constraints=["implicit feedback"],
+        success_metrics=["recall@5", "ndcg@5", "coverage"],
+        preferred_algorithms=["popularity"],
+        data_profile="movielens implicit feedback",
+    )
+    candidate = generator.generate_candidate(
+        task_id="task-direct-recommendation",
+        candidate_id="candidate-direct-pop",
+        algorithm_key="popularity",
+        spec=spec,
+    )
+    profile = TopKRecommendationProfile()
+    dataset_dir = tmp_path / "recommendation-dataset"
+    profile.serialize_dataset(dataset, dataset_dir)
+
+    report = profile.validate_candidate_path(
+        candidate_id=candidate.candidate_id,
+        algorithm_key=candidate.algorithm_key,
+        code_path=Path(candidate.code_path),
+        dataset_dir=dataset_dir,
+        top_k=5,
+    )
+
+    assert report.success is True
+    assert report.interface_ok is True
+    assert report.stability_ok is True
+    assert report.metrics.coverage > 0
 
 
 def test_repair_agent_recovers_missing_interface(test_settings):
@@ -111,3 +150,41 @@ def test_validator_accepts_risk_score_template(test_settings):
     assert report.success is True
     assert report.metrics.accuracy >= 0.5
     assert report.profile_name == "tabular_classification"
+
+
+def test_classification_profile_validates_generated_candidate_in_process(test_settings, tmp_path):
+    dataset = CustomerChurnDatasetLoader(test_settings.data_dir / "churn_sample").load()
+    generator = CandidateGenerator(test_settings)
+    spec = CapabilitySpec(
+        task_name="customer_churn",
+        objective="Build a customer churn classifier.",
+        task_type="tabular_classification",
+        dataset_name="churn_sample",
+        top_k=5,
+        constraints=["local cpu"],
+        success_metrics=["accuracy", "f1"],
+        preferred_algorithms=["risk_score"],
+        data_profile="customer churn tabular classification",
+    )
+    candidate = generator.generate_candidate(
+        task_id="task-direct-classification",
+        candidate_id="candidate-direct-risk",
+        algorithm_key="risk_score",
+        spec=spec,
+    )
+    profile = TabularClassificationProfile()
+    dataset_dir = tmp_path / "classification-dataset"
+    profile.serialize_dataset(dataset, dataset_dir)
+
+    report = profile.validate_candidate_path(
+        candidate_id=candidate.candidate_id,
+        algorithm_key=candidate.algorithm_key,
+        code_path=Path(candidate.code_path),
+        dataset_dir=dataset_dir,
+        top_k=5,
+    )
+
+    assert report.success is True
+    assert report.interface_ok is True
+    assert report.stability_ok is True
+    assert report.metrics.f1 >= 0

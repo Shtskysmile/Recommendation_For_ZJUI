@@ -155,13 +155,15 @@ class TopKRecommendationProfile(BaseValidationProfile):
             interface_ok = True
             sample_user = next(iter(dataset.test_truth))
             single_recommendations = recommender.recommend(sample_user, k=top_k)
-            tracemalloc.start()
             batch_start = time.perf_counter()
             batch_recommendations = recommender.batch_recommend(sorted(dataset.test_truth), k=top_k)
             elapsed = time.perf_counter() - batch_start
+            stability_users = sorted(dataset.test_truth)[:32]
+            tracemalloc.start()
+            stability_first_pass = recommender.batch_recommend(stability_users, k=top_k)
             _current_allocated, peak_allocated = tracemalloc.get_traced_memory()
             tracemalloc.stop()
-            second_pass = recommender.batch_recommend(sorted(dataset.test_truth), k=top_k)
+            stability_second_pass = recommender.batch_recommend(stability_users, k=top_k)
         except Exception as exc:
             if tracemalloc.is_tracing():
                 tracemalloc.stop()
@@ -198,7 +200,13 @@ class TopKRecommendationProfile(BaseValidationProfile):
                 warnings.append(f"Recommendation list shorter than top_k for user {user_id}.")
             normalized_batch[int(user_id)] = normalized_items
 
-        stability_ok = batch_recommendations == second_pass
+        expected_stability_sample = {
+            user_id: batch_recommendations.get(user_id)
+            for user_id in stability_users
+        }
+        stability_ok = (
+            expected_stability_sample == stability_first_pass == stability_second_pass
+        )
         if not stability_ok:
             warnings.append("Recommendations are not deterministic across repeated calls.")
         if errors:

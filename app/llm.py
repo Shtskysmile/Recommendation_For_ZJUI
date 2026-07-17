@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import re
 from abc import ABC, abstractmethod
 
 import httpx
 
+from app.data import DEFAULT_RECOMMENDATION_DATASET
 from app.models import CapabilitySpec, CandidatePlan, GenerationRequest, RetrievedKnowledge
 from app.plugin_loader import PluginLoader
 from app.settings import AppSettings
@@ -56,7 +58,14 @@ def _normalize_task_type(value: str | None, request: GenerationRequest) -> str:
 
 
 def _default_dataset_name(task_type: str) -> str:
-    return "churn_sample" if task_type == "tabular_classification" else "movielens_sample"
+    return "churn_sample" if task_type == "tabular_classification" else DEFAULT_RECOMMENDATION_DATASET
+
+
+def _normalize_dataset_name(request: GenerationRequest, task_type: str) -> str:
+    requested_name = str(request.dataset_name or "").strip()
+    if requested_name and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", requested_name):
+        return requested_name
+    return _default_dataset_name(task_type)
 
 
 def _normalize_capability_payload(payload: dict, request: GenerationRequest) -> CapabilitySpec:
@@ -78,7 +87,9 @@ def _normalize_capability_payload(payload: dict, request: GenerationRequest) -> 
         task_name=str(payload.get("task_name") or request.task_name),
         objective=str(payload.get("objective") or request.capability_description.strip()),
         task_type=task_type,
-        dataset_name=str(payload.get("dataset_name") or request.dataset_name or _default_dataset_name(task_type)),
+        # Dataset selection is a local resource decision. Never turn an LLM's
+        # descriptive or hallucinated dataset value into a filesystem path.
+        dataset_name=_normalize_dataset_name(request, task_type),
         top_k=int(payload.get("top_k") or request.top_k),
         constraints=constraints,
         success_metrics=success_metrics,

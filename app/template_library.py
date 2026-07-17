@@ -108,9 +108,11 @@ class GeneratedRecommender:
             item_id
             for item_id, _score in sorted(scores.items(), key=lambda pair: (-pair[1], pair[0]))
         ]
+        ranked_set = set(ranked)
         for item_id in self.popularity:
-            if item_id not in seen and item_id not in ranked:
+            if item_id not in seen and item_id not in ranked_set:
                 ranked.append(item_id)
+                ranked_set.add(item_id)
         return ranked[:k]
 
     def batch_recommend(self, user_ids: list[int], k: int = {spec.top_k}) -> dict[int, list[int]]:
@@ -178,9 +180,11 @@ class GeneratedRecommender:
             item_id
             for item_id, _score in sorted(ranked_pairs, key=lambda pair: (-pair[1], pair[0]))
         ]
+        ranked_set = set(ranked)
         for item_id in self.popularity:
-            if item_id not in seen and item_id not in ranked:
+            if item_id not in seen and item_id not in ranked_set:
                 ranked.append(item_id)
+                ranked_set.add(item_id)
         return ranked[:k]
 
     def batch_recommend(self, user_ids: list[int], k: int = {spec.top_k}) -> dict[int, list[int]]:
